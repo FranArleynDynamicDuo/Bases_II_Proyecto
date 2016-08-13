@@ -1,0 +1,3 @@
+DROP TABLE Ruta;
+DROP TABLE Barco;
+DROP TABLE Taller;
