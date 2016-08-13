@@ -17,7 +17,7 @@ CREATE TYPE barco_t as Object (
 CREATE TABLE Barco OF barco_t (PRIMARY KEY (nombre));
 
 CREATE TYPE destino_t AS OBJECT(
-    ubicacion varchar(10)
+    ubicacion varchar(50)
 );
 /
 CREATE TABLE Destino OF destino_t;
