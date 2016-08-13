@@ -1,61 +1,66 @@
-CREATE OR REPLACE TYPE ruta_t AS object (
-    nombre_ruta   varchar(100) not null,
-    regimen        varchar(50),
-    destinos       varchar(100), /*multievaluado*/
-    member function getBarco return barco_t
-); 
-/
-CREATE TABLE Ruta OF ruta_t (PRIMARY KEY (nombre_ruta));
+DROP TYPE barco_t FORCE;
+DROP TYPE ruta_t FORCE;
+DROP TYPE entretenimiento_t FORCE;
+DROP TYPE taller_t FORCE;
+DROP TYPE restaurante_t FORCE;
+DROP TYPE piscina_t FORCE;
+DROP TYPE bailoterapia_t FORCE;
+DROP TYPE es_ofrecido_T FORCE;
+DROP TABLE Ruta;
+DROP TABLE Barco;
+DROP TABLE Entretenimiento;
+DROP TABLE Es_Ofrecido;
 
-CREATE OR REPLACE TYPE barco_t as Object (
-    nombre varchar(50) not null,
+
+
+CREATE TYPE barco_t as Object (
+    nombre varchar(50),
     capacidad int,
     nro_cabinas int,
     nro_cubiertas int,
     tonelaje int,
-    eslora int,
-    realiza REF ruta_t scope is Ruta,
-    member function getEntretenimiento return entretenimiento_Col,
+    eslora int
 ); 
 /
-
 CREATE TABLE Barco OF barco_t (PRIMARY KEY (nombre));
-
-
-CREATE OR REPLACE TYPE entretenimiento AS Object (
-    id_actividad    int not null,
+CREATE TYPE ruta_t AS object (
+    nombre_ruta   varchar(100),
+    regimen        varchar(50),
+    destinos       varchar(100), /*multievaluado*/
+    es_realizada   REF barco_t
+); 
+/
+CREATE TABLE Ruta OF ruta_t (PRIMARY KEY (nombre_ruta));
+CREATE TYPE entretenimiento_t AS Object (
+    id_actividad    int,
     nombre          varchar(100),
     descripcion     varchar(500),
-    capacidad       int,
-    ofrece          barco_Col) NOT FINAL; 
+    capacidad       int) NOT FINAL; 
     /
 
-CREATE OR REPLACE TYPE taller_t UNDER entretenimiento (
+CREATE TYPE taller_t UNDER entretenimiento_t (
+    instructor  varchar(50)
+); 
+/
+
+CREATE TYPE restaurante_t UNDER entretenimiento_t (
+    nro_mesas   int
+); 
+/
+
+CREATE TYPE piscina_t UNDER entretenimiento_t (
+    profundidad int/*,
+    member function getBailoterapia return bailoterapia_t,*/
+); 
+/
+
+CREATE TYPE bailoterapia_t UNDER entretenimiento_t (
     instructor  varchar(50),
-); 
-/
-
-CREATE OR REPLACE TYPE restaurante_t UNDER entretenimiento (
-    nro_mesas   int,
-); 
-/
-
-CREATE OR REPLACE TYPE piscina_t UNDER entretenimiento (
-    profundidad int,
-    member function getBailoterapia return bailoterapia_t,
-); 
-/
-
-CREATE OR REPLACE TYPE bailoterapia_t UNDER entretenimiento (
-    instructor  varchar(50),
-    duracion  int,
-    se_realiza REF piscina_t SCOPE IS Piscina,
+    duracion  int/*,
+    se_realiza REF piscina_t SCOPE IS Piscina,*/
 );
 /
-
-/*    
-CREATE OR REPLACE TYPE barco_Col AS TABLE OF REF Barco; 
+CREATE TABLE Entretenimiento OF entretenimiento_t (PRIMARY KEY(id_actividad));
+CREATE TYPE es_ofrecido_T AS OBJECT (barco REF barco_t,entretenimiento REF entretenimiento_t);
 /
-CREATE OR REPLACE TYPE entretenimiento_Col AS TABLE entretenimiento (PRIMARY KEY (id_actividad)); 
-/
-*/
+CREATE TABLE Es_Ofrecido of es_ofrecido_T (foreign key (barco) references Barco, foreign key (entretenimiento) references Entretenimiento);
