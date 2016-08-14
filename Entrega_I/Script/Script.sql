@@ -1,3 +1,5 @@
+/* DROP FOREING KEY ? */
+
 DROP TYPE barco_t FORCE;
 DROP TYPE destino_t FORCE;
 DROP TYPE destinos_mult FORCE;
