@@ -23,6 +23,29 @@ INSERT ALL
 	        ( SELECT REF(oc) FROM Barco oc WHERE oc.nombre = 'Buque MONARCH') )
 SELECT * from dual;
 
+	/* SELECT SOLO SIN EL ATRIBUTO MULTIVALUADO */
+	SELECT destinos, regimen, e.es_realizada.nombre
+	FROM Ruta e
+	WHERE nombre_ruta='2 Noches - Andalucia';
+
+
+	/* A LOS ATRIBUTOS MULTIEVALUADOS SI SE MODIFICA EL CODIGO */
+	CREATE TYPE destino AS VARRAY(50) OF VARCHAR2(16);
+	/
+
+	CREATE TABLE Ruta(
+	    nombre_ruta    varchar(100) PRIMARY KEY,
+	    regimen        varchar(50),
+	    destinos       destino, /*multievaluado*/
+	    es_realizada   REF barco_t SCOPE IS Barco
+	); 
+	/
+
+	SELECT VALUE(x) FROM
+    THE (SELECT c.destinos FROM Ruta c
+    WHERE c.nombre_ruta = '2 Noches - Andalucia') x
+    WHERE VALUE(x) is not null
+
 
 /* INSTANCIAS PARA ENTRETENIMIENTO */
 INSERT ALL
@@ -85,7 +108,8 @@ INTO Bailoterapia
 		( SELECT REF(p) FROM Piscina p WHERE p.id_actividad = 10) ))
 SELECT * FROM dual;
 
-SELECT duracion, e.piscina_bai.id_actividad, e.piscina_bai.descripcion
-FROM Bailoterapia e
-WHERE instructor='Instructor1';
+	/* SELECT DE BAILOTERAPIA REF PISCINA */
+	SELECT duracion, e.piscina_bai.id_actividad, e.piscina_bai.descripcion
+	FROM Bailoterapia e
+	WHERE instructor='Instructor1';
 
