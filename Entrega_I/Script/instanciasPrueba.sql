@@ -11,7 +11,7 @@ SELECT * from Barco;
 /* INSTANCIAS PARA RUTAS */
 INSERT INTO Ruta (nombre_ruta, regimen, destinos, es_realizada) VALUES 
 ('2 Noches - Andalucia', 'Todo Incluido', destinos_mult(destino_t('Marsella'),destino_t('Malaga')), 
-	( SELECT REF(oc) FROM Barco oc WHERE oc.nombre = 'Buque ZENITH-ZT' ) );
+	( SELECT REF(oc) FROM Barco oc WHERE oc.nombre = 'Buque SOVEREIGN' ) );
 INSERT INTO Ruta (nombre_ruta, regimen, destinos, es_realizada) VALUES 
 ('2 Noches - Barcelona', 'Todo Incluido', destinos_mult(destino_t('Marsella'),destino_t('Barcelona')), 
 	( SELECT REF(oc) FROM Barco oc WHERE oc.nombre = 'Buque ZENITH-ZT' ) );
@@ -29,19 +29,29 @@ INSERT INTO Entretenimiento
 VALUES (entretenimiento_t(3,'Teatro','Acercate al Teatro y disfruta nuestras funciones',400));
 
 /* INSTANCIAS PARA ENTRETENIMIENTO-TALLER */
-INSERT INTO Entretenimiento
+INSERT INTO Taller
 VALUES (taller_t(4,'Taller de Origame','Aprende a hacer Origami en poco Tiempo',100,'Instructor1'));
-INSERT INTO Entretenimiento
+INSERT INTO Taller
 VALUES (taller_t(5,'Taller de Yoga','Relajate y aprende yoga en la cubierta mientras te pega el sol.',50,'Instructor2'));
-INSERT INTO Entretenimiento
+INSERT INTO Taller
 VALUES (taller_t(6,'Taller de Comida Asiatica','Aprende a Cocinar comida Asiatica con nuestro instructor proveniente de China',100,'Instructor3'));
 
 /* INSTANCIAS PARA ENTRETENIMIENTO-RESTAURANTE */
-INSERT INTO Entretenimiento
+INSERT INTO Restaurante
 VALUES (restaurante_t(7,'Cena de Gala','Vistete de Elegante y tomate una foto con el Capitan',1000,120));
-INSERT INTO Entretenimiento
+INSERT INTO Restaurante
 VALUES (restaurante_t(8,'Buffet de Comida Latinoamericana','Acercate al restaurante y disfruta comida proveniente de latinoamerica',1500,120));
-INSERT INTO Entretenimiento
+INSERT INTO Restaurante
 VALUES (restaurante_t(9,'Monumentos de Hielo','Presentacion de esculturas de hielo, acercate y disfruta de la presentacion',1500,120));
 
-SELECT * FROM Entretenimiento;
+/* INSTANCIAS PARA ENTRETENIMIENTO-PISCINA */
+INSERT INTO Piscina
+VALUES (piscina_t(10,'Piscina para ninos','Piscina para ninos de 5 - 13 anos, para que difruten los dias de navegacion',1000,'30 metros'));
+INSERT INTO Piscina
+VALUES (piscina_t(11,'Jacuzzi','Relajate en el Jacuzzi en la cubierta 10',1000,'20 metros'));
+INSERT INTO Piscina
+VALUES (piscina_t(12,'Piscina para Adultos','Piscina para mayores de 15 anos, para que difruten los dias de navegacion',1000,'70 metros'));
+
+/* INSTANCIAS PARA ENTRETENIMIENTO-BAILOTERAPIA */
+INSERT INTO Bailoterapia
+VALUES (bailoterapia_t(13,'Cena de Gala','Vistete de Elegante y tomate una foto con el Capitan',1000,'50 metros'));

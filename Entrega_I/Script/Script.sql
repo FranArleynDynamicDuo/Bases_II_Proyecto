@@ -9,13 +9,13 @@ DROP TYPE piscina_t FORCE;
 DROP TYPE bailoterapia_t FORCE;
 DROP TYPE entretenimiento_t FORCE;
 DROP TYPE Ofrece_inT; 
-DROP TABLE Destino;
+DROP TABLE Destino;             
 DROP TABLE Ruta;
 DROP TABLE ofrece_in;
 DROP TABLE Barco;
 DROP TABLE Entretenimiento;
-DROP TABLE Bailoterapia;
-DROP TABLE Piscina;
+DROP TABLE Bailoterapia;        
+DROP TABLE Piscina;            
 
 CREATE TYPE barco_t as Object (
     nombre varchar(50),
@@ -63,7 +63,7 @@ CREATE TYPE restaurante_t UNDER entretenimiento_t (
 /
 
 CREATE TYPE piscina_t UNDER entretenimiento_t (
-    profundidad int
+    profundidad varchar(50)
 );
 /
 
@@ -86,6 +86,9 @@ CREATE TABLE Bailoterapia OF bailoterapia_t (
     
 CREATE TABLE Entretenimiento OF entretenimiento_t ( 
     id_actividad NOT NULL, PRIMARY KEY(id_actividad)) OBJECT ID PRIMARY KEY;
+
+CREATE TABLE Taller OF taller_t;
+CREATE TABLE Restaurante OF restaurante_t;
 
 CREATE TYPE Ofrece_inT AS OBJECT (
     entretenimiento_typ REF entretenimiento_t,
