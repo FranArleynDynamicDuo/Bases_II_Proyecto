@@ -1,3 +1,6 @@
+/* FALTA TABLA DE ofrece_in*/
+
+
 /* INSTANCIAS PARA BARCOS */
 INSERT INTO Barco (nombre, capacidad, nro_cabinas, nro_cubiertas, tonelaje, eslora) VALUES
 ('Buque ZENITH-ZT', 1442, 720, 10, 46811, 208);
