@@ -14,7 +14,8 @@ DROP TABLE Ruta;
 DROP TABLE ofrece_in;
 DROP TABLE Barco;
 DROP TABLE Entretenimiento;
-
+DROP TABLE Bailoterapia;
+DROP TABLE Piscina;
 
 CREATE TYPE barco_t as Object (
     nombre varchar(50),
@@ -73,7 +74,18 @@ CREATE TYPE bailoterapia_t UNDER entretenimiento_t ( /*n*/
 );
 /
 
-CREATE TABLE Entretenimiento OF entretenimiento_t ( id_actividad NOT NULL, PRIMARY KEY(id_actividad)) OBJECT ID PRIMARY KEY;
+CREATE TABLE Piscina OF piscina_t (
+    id_actividad NOT NULL, 
+    PRIMARY KEY(id_actividad)
+);
+
+CREATE TABLE Bailoterapia OF bailoterapia_t (
+    id_actividad NOT NULL, 
+    PRIMARY KEY (id_actividad),
+    foreign key(piscina_bai) references Piscina);
+    
+CREATE TABLE Entretenimiento OF entretenimiento_t ( 
+    id_actividad NOT NULL, PRIMARY KEY(id_actividad)) OBJECT ID PRIMARY KEY;
 
 CREATE TYPE Ofrece_inT AS OBJECT (
     entretenimiento_typ REF entretenimiento_t,
