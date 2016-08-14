@@ -71,7 +71,7 @@ CREATE TYPE piscina_t UNDER entretenimiento_t (
 
 CREATE TYPE bailoterapia_t UNDER entretenimiento_t ( /*n*/
     instructor      varchar(50),
-    duracion        int,
+    duracion        varchar(10),
     piscina_bai     REF piscina_t
 );
 /

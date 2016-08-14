@@ -53,5 +53,8 @@ INSERT INTO Piscina
 VALUES (piscina_t(12,'Piscina para Adultos','Piscina para mayores de 15 anos, para que difruten los dias de navegacion',1000,'70 metros'));
 
 /* INSTANCIAS PARA ENTRETENIMIENTO-BAILOTERAPIA */
+INSERT INTO Bailoterapia
+VALUES (bailoterapia_t(13,'Bailoterapia','Bailoterapia',100,'Instructor1',1500,'Instructor1','1 hora',
+		( SELECT REF(p) FROM Piscina p WHERE p.id_actividad = 10) ));
 
 SELECT * FROM Entretenimiento;
