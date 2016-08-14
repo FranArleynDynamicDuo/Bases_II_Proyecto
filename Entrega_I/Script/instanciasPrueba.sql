@@ -43,3 +43,5 @@ INSERT INTO Entretenimiento
 VALUES (restaurante_t(8,'Buffet de Comida Latinoamericana','Acercate al restaurante y disfruta comida proveniente de latinoamerica',1500,120));
 INSERT INTO Entretenimiento
 VALUES (restaurante_t(9,'Monumentos de Hielo','Presentacion de esculturas de hielo, acercate y disfruta de la presentacion',1500,120));
+
+SELECT * FROM Entretenimiento;

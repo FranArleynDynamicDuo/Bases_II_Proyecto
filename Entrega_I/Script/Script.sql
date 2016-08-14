@@ -11,9 +11,10 @@ DROP TYPE entretenimiento_t FORCE;
 DROP TYPE Ofrece_inT; 
 DROP TABLE Destino;
 DROP TABLE Ruta;
+DROP TABLE ofrece_in;
 DROP TABLE Barco;
 DROP TABLE Entretenimiento;
-DROP TABLE ofrece_in;
+
 
 CREATE TYPE barco_t as Object (
     nombre varchar(50),
