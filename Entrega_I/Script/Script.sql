@@ -9,13 +9,15 @@ DROP TYPE piscina_t FORCE;
 DROP TYPE bailoterapia_t FORCE;
 DROP TYPE entretenimiento_t FORCE;
 DROP TYPE Ofrece_inT; 
-DROP TABLE Destino;             
-DROP TABLE Ruta;
+DROP TABLE Destino;                       
+DROP TABLE Ruta;                /* LISTA PERO NO SE BUSCARLA */
 DROP TABLE ofrece_in;
-DROP TABLE Barco;
-DROP TABLE Entretenimiento;
+DROP TABLE Barco;               /* LISTA */ 
+DROP TABLE Entretenimiento;     /* LISTA */ 
 DROP TABLE Bailoterapia;        
-DROP TABLE Piscina;            
+DROP TABLE Piscina;             /* LISTA */
+DROP TABLE Taller;              /* LISTA */ 
+DROP TABLE Restaurante;         /* LISTA */       
 
 CREATE TYPE barco_t as Object (
     nombre varchar(50),

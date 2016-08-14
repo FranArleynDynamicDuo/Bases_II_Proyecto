@@ -53,5 +53,5 @@ INSERT INTO Piscina
 VALUES (piscina_t(12,'Piscina para Adultos','Piscina para mayores de 15 anos, para que difruten los dias de navegacion',1000,'70 metros'));
 
 /* INSTANCIAS PARA ENTRETENIMIENTO-BAILOTERAPIA */
-INSERT INTO Bailoterapia
-VALUES (bailoterapia_t(13,'Cena de Gala','Vistete de Elegante y tomate una foto con el Capitan',1000,'50 metros'));
+
+SELECT * FROM Entretenimiento;
