@@ -14,7 +14,7 @@ DROP TABLE Ruta;                /* LISTA PERO NO SE BUSCARLA */
 DROP TABLE ofrece_in;
 DROP TABLE Barco;               /* LISTA */ 
 DROP TABLE Entretenimiento;     /* LISTA */ 
-DROP TABLE Bailoterapia;        
+DROP TABLE Bailoterapia;        /* LISTA */
 DROP TABLE Piscina;             /* LISTA */
 DROP TABLE Taller;              /* LISTA */ 
 DROP TABLE Restaurante;         /* LISTA */       
@@ -65,13 +65,13 @@ CREATE TYPE restaurante_t UNDER entretenimiento_t (
 /
 
 CREATE TYPE piscina_t UNDER entretenimiento_t (
-    profundidad varchar(50)
+    profundidad varchar(15)
 );
 /
 
 CREATE TYPE bailoterapia_t UNDER entretenimiento_t ( /*n*/
     instructor      varchar(50),
-    duracion        varchar(10),
+    duracion        varchar(15),
     piscina_bai     REF piscina_t
 );
 /
