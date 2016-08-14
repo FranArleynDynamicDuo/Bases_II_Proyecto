@@ -8,13 +8,11 @@ DROP TYPE bailoterapia_t FORCE;
 DROP TYPE es_ofrecido_T FORCE;
 DROP TYPE destino_t FORCE;
 DROP TYPE destinos_mult FORCE;
+DROP TABLE Es_Ofrecido;
 DROP TABLE Ruta;
 DROP TABLE Barco;
 DROP TABLE Entretenimiento;
-DROP TABLE Es_Ofrecido;
 DROP TABLE Destino;
-
-
 
 CREATE TYPE barco_t as Object (
     nombre varchar(50),
@@ -26,13 +24,16 @@ CREATE TYPE barco_t as Object (
 ); 
 /
 CREATE TABLE Barco OF barco_t ( nombre NOT NULL, PRIMARY KEY (nombre) ) OBJECT ID PRIMARY KEY;
+
 CREATE TYPE destino_t AS OBJECT(
     ubicacion varchar(50)
 );
 /
 CREATE TABLE Destino OF destino_t;
+
 CREATE TYPE destinos_mult AS VARRAY(20) OF destino_t;
 /
+
 CREATE TYPE ruta_t AS object (
     nombre_ruta   varchar(100),
     regimen        varchar(50),
@@ -41,12 +42,13 @@ CREATE TYPE ruta_t AS object (
 ); 
 /
 CREATE TABLE Ruta OF ruta_t (PRIMARY KEY (nombre_ruta));
+
 CREATE TYPE entretenimiento_t AS Object (
     id_actividad    int,
     nombre          varchar(100),
     descripcion     varchar(500),
     capacidad       int) NOT FINAL; 
-    /
+/
 
 CREATE TYPE taller_t UNDER entretenimiento_t (
     instructor  varchar(50)
@@ -70,7 +72,18 @@ CREATE TYPE bailoterapia_t UNDER entretenimiento_t ( /*n*/
     piscina_bai     REF piscina_t
 );
 /
-CREATE TABLE Entretenimiento OF entretenimiento_t (PRIMARY KEY(id_actividad));
-CREATE TYPE es_ofrecido_T AS OBJECT (barco REF barco_t,entretenimiento REF entretenimiento_t);
+
+CREATE TABLE Entretenimiento OF entretenimiento_t (
+	PRIMARY KEY(id_actividad)
+);
+
+CREATE TYPE es_ofrecido_T AS OBJECT (
+	barco REF barco_t,
+	entretenimiento REF entretenimiento_t
+);
 /
-CREATE TABLE Es_Ofrecido of es_ofrecido_T (foreign key (barco) references Barco, foreign key (entretenimiento) references Entretenimiento);
+
+CREATE TABLE Es_Ofrecido of es_ofrecido_T (
+	foreign key (barco) references Barco, 
+	foreign key (entretenimiento) references Entretenimiento
+);
