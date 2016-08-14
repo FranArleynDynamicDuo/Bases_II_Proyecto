@@ -41,6 +41,12 @@ SELECT * from dual;
 	); 
 	/
 
+	INSERT ALL
+    	INTO Ruta (nombre_ruta, regimen, destinos, es_realizada) VALUES 
+            ('2 Noches - Andalucia', 'Todo Incluido', destino('Marsella','Malaga'), 
+            ( SELECT REF(oc) FROM Barco oc WHERE oc.nombre = 'Buque SOVEREIGN' ) )
+	SELECT * from dual;
+
 	SELECT VALUE(x) FROM
     THE (SELECT c.destinos FROM Ruta c
     WHERE c.nombre_ruta = '2 Noches - Andalucia') x
