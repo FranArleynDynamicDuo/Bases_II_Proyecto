@@ -6,10 +6,13 @@ DROP TYPE restaurante_t FORCE;
 DROP TYPE piscina_t FORCE;
 DROP TYPE bailoterapia_t FORCE;
 DROP TYPE es_ofrecido_T FORCE;
+DROP TYPE destino_t FORCE;
+DROP TYPE destinos_mult FORCE;
 DROP TABLE Ruta;
 DROP TABLE Barco;
 DROP TABLE Entretenimiento;
 DROP TABLE Es_Ofrecido;
+DROP TABLE Destino;
 
 
 
@@ -22,11 +25,18 @@ CREATE TYPE barco_t as Object (
     eslora int
 ); 
 /
-CREATE TABLE Barco OF barco_t (PRIMARY KEY (nombre));
+CREATE TABLE Barco OF barco_t ( nombre NOT NULL, PRIMARY KEY (nombre) ) OBJECT ID PRIMARY KEY;
+CREATE TYPE destino_t AS OBJECT(
+    ubicacion varchar(50)
+);
+/
+CREATE TABLE Destino OF destino_t;
+CREATE TYPE destinos_mult AS VARRAY(20) OF destino_t;
+/
 CREATE TYPE ruta_t AS object (
     nombre_ruta   varchar(100),
     regimen        varchar(50),
-    destinos       varchar(100), /*multievaluado*/
+    destinos        destinos_mult, /*multievaluado*/
     es_realizada   REF barco_t
 ); 
 /
@@ -54,10 +64,10 @@ CREATE TYPE piscina_t UNDER entretenimiento_t (
 ); 
 /
 
-CREATE TYPE bailoterapia_t UNDER entretenimiento_t (
-    instructor  varchar(50),
-    duracion  int/*,
-    se_realiza REF piscina_t SCOPE IS Piscina,*/
+CREATE TYPE bailoterapia_t UNDER entretenimiento_t ( /*n*/
+    instructor      varchar(50),
+    duracion        int,
+    piscina_bai     REF piscina_t
 );
 /
 CREATE TABLE Entretenimiento OF entretenimiento_t (PRIMARY KEY(id_actividad));
