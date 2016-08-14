@@ -34,14 +34,13 @@ CREATE TABLE Destino OF destino_t;
 CREATE TYPE destinos_mult AS VARRAY(20) OF destino_t;
 /
 
-CREATE TYPE ruta_t AS object (
-    nombre_ruta   varchar(100),
+CREATE TABLE Ruta(
+    nombre_ruta    varchar(100) PRIMARY KEY,
     regimen        varchar(50),
-    destinos        destinos_mult, /*multievaluado*/
-    es_realizada   REF barco_t
+    destinos       destinos_mult, /*multievaluado*/
+    es_realizada   REF barco_t SCOPE IS Barco
 ); 
 /
-CREATE TABLE Ruta OF ruta_t (PRIMARY KEY (nombre_ruta));
 
 CREATE TYPE entretenimiento_t AS Object (
     id_actividad    int,
@@ -69,7 +68,7 @@ CREATE TYPE piscina_t UNDER entretenimiento_t (
 CREATE TYPE bailoterapia_t UNDER entretenimiento_t ( /*n*/
     instructor      varchar(50),
     duracion        int,
-    piscina_bai     REF piscina_t
+    piscina_bai     REF piscina_t   /* Intento de hacer relacion de 1:N */
 );
 /
 
