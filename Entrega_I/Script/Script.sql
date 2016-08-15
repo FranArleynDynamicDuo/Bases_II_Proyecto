@@ -9,15 +9,15 @@ DROP TYPE piscina_t FORCE;
 DROP TYPE bailoterapia_t FORCE;
 DROP TYPE entretenimiento_t FORCE;
 DROP TYPE Ofrece_inT; 
-DROP TABLE Destino;                       
-DROP TABLE Ruta;                /* LISTA PERO NO SE BUSCARLA */
-DROP TABLE ofrece_in;
-DROP TABLE Barco;               /* LISTA */ 
-DROP TABLE Entretenimiento;     /* LISTA */ 
-DROP TABLE Bailoterapia;        /* LISTA */
-DROP TABLE Piscina;             /* LISTA */
-DROP TABLE Taller;              /* LISTA */ 
-DROP TABLE Restaurante;         /* LISTA */       
+DROP TABLE Destino CASCADE CONSTRAINTS;                       
+DROP TABLE ofrece_in CASCADE CONSTRAINTS;
+DROP TABLE Ruta CASCADE CONSTRAINTS;
+DROP TABLE Bailoterapia CASCADE CONSTRAINTS;
+DROP TABLE Piscina CASCADE CONSTRAINTS;
+DROP TABLE Taller CASCADE CONSTRAINTS;
+DROP TABLE Restaurante CASCADE CONSTRAINTS;
+DROP TABLE Entretenimiento CASCADE CONSTRAINTS;
+DROP TABLE Barco CASCADE CONSTRAINTS;
 
 CREATE TYPE barco_t as Object (
     nombre varchar(50),
@@ -39,7 +39,7 @@ CREATE TABLE Destino OF destino_t;
 CREATE TYPE destinos_mult AS VARRAY(20) OF destino_t;
 /
 
-CREATE TABLE Ruta(
+CREATE TABLE Ruta (
     nombre_ruta    varchar(100) PRIMARY KEY,
     regimen        varchar(50),
     destinos       destinos_mult, /* HAY OTRA MANERA DE PROGRAMARLO DECIRLE A FRAN */
