@@ -12,10 +12,6 @@ DROP TYPE Ofrece_inT;
 DROP TABLE Destino CASCADE CONSTRAINTS;                       
 DROP TABLE ofrece_in CASCADE CONSTRAINTS;
 DROP TABLE Ruta CASCADE CONSTRAINTS;
-DROP TABLE Bailoterapia CASCADE CONSTRAINTS;
-DROP TABLE Piscina CASCADE CONSTRAINTS;
-DROP TABLE Taller CASCADE CONSTRAINTS;
-DROP TABLE Restaurante CASCADE CONSTRAINTS;
 DROP TABLE Entretenimiento CASCADE CONSTRAINTS;
 DROP TABLE Barco CASCADE CONSTRAINTS;
 
@@ -76,21 +72,10 @@ CREATE TYPE bailoterapia_t UNDER entretenimiento_t ( /*n*/
 );
 /
 
-CREATE TABLE Piscina OF piscina_t (
-    id_actividad NOT NULL, 
-    PRIMARY KEY(id_actividad)
-);
 
-CREATE TABLE Bailoterapia OF bailoterapia_t (
-    id_actividad NOT NULL, 
-    PRIMARY KEY (id_actividad),
-    foreign key(piscina_bai) references Piscina);
-    
+
 CREATE TABLE Entretenimiento OF entretenimiento_t ( 
     id_actividad NOT NULL, PRIMARY KEY(id_actividad)) OBJECT ID PRIMARY KEY;
-
-CREATE TABLE Taller OF taller_t;
-CREATE TABLE Restaurante OF restaurante_t;
 
 CREATE TYPE Ofrece_inT AS OBJECT (
     entretenimiento_typ REF entretenimiento_t,
