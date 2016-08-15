@@ -1,0 +1,9 @@
+Estimados estudiantes
+
+El siguiente proyecto consiste en implementar triggers para una asociación 1:1. Para ello debe considerar lo siguiente:
+- Modificar la asociación 1:1 del proyecto de Traducción Objeto-Relacional de tal forma que exista una referencia en ambos tipos.
+- Debe mantener las inversas para ambas referencias al momento de insertar, modificar o eliminar en cualesquiera de las dos tablas.
+- Debe haber una instrucción de inserción, una instrucción de modificación, una instrucción de eliminación y una instrucción de consulta por cada tipo donde se pruebe que los triggers se ejecutan correctamente.
+
+Saludos cordiales,
+Marlene
