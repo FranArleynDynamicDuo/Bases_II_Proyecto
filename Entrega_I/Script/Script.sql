@@ -42,7 +42,7 @@ CREATE TYPE destinos_mult AS VARRAY(20) OF destino_t;
 CREATE TABLE Ruta(
     nombre_ruta    varchar(100) PRIMARY KEY,
     regimen        varchar(50),
-    destinos       destinos_mult, /*multievaluado*/
+    destinos       destinos_mult, /* HAY OTRA MANERA DE PROGRAMARLO DECIRLE A FRAN */
     es_realizada   REF barco_t SCOPE IS Barco
 ); 
 /
