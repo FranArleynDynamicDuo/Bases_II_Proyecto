@@ -27,6 +27,14 @@
     ); 
     /
     CREATE TABLE Barco OF barco_t ( nombre NOT NULL, PRIMARY KEY (nombre) ) OBJECT ID PRIMARY KEY;
+    /* Multivaluado */
+    /* Para implementar el atributo multivaluado creamos un tipo primitivo llamado destino_t el cual sera
+    el tipo de cada valor del multivaluado, luego creamos un tipo llamado destinos_mult que es una tabla de 
+    los destinos_t y luego agregamos un atributo en el objeto ruta de este tipo para almacenar todos los destinos
+    de la ruta en una tabla anidada
+    
+    Se implemento de esta manera ya que simula de manera mas correcta el comportamiento de un multivaluado en un esquema
+     */
     CREATE TYPE destino_t AS OBJECT(
         ubicacion varchar(50)
     );
@@ -41,6 +49,7 @@
         es_realizada   REF barco_t SCOPE IS Barco
     ) NESTED TABLE destinos STORE AS destinos_store; 
     /
+    /* Super clase y sub clases */
     CREATE TYPE entretenimiento_t AS OBJECT (
         id_actividad    int,
         nombre          varchar(100),
@@ -55,18 +64,26 @@
         nro_mesas   int
     );
     /
+    /* Relacion entre dos subclases 1:N */
+    /* Se implemento con una referencia en el tipo bailoterapia_t a la piscina ya que
+    nos parecio la forma mas sencilla para implementar la relacion y ademas se facilita
+    el mantenimiento de la tabla ya que actua como una llave foranea la cual es sencilla de
+    cambiar si es necesario */
     CREATE TYPE piscina_t UNDER entretenimiento_t (
         profundidad varchar(15)
     );
     /
-    CREATE TYPE bailoterapia_t UNDER entretenimiento_t ( /*n*/
+    CREATE TYPE bailoterapia_t UNDER entretenimiento_t (
         instructor      varchar(50),
         duracion        varchar(15),
-        piscina_bai     REF piscina_t
+        piscina_bai     REF entretenimiento_t
     );
     /
     CREATE TABLE Entretenimiento OF entretenimiento_t ( 
-        id_actividad NOT NULL, PRIMARY KEY(id_actividad)) OBJECT ID PRIMARY KEY;
+        id_actividad NOT NULL, PRIMARY KEY(id_actividad)) OBJECT IDENTIFIER IS SYSTEM GENERATED;
+    /* Relacion M:N */
+    /* Se implemento con el uso de una tabla intermedia, para asi conservar la simplicidad de la estructura
+    de las tablas y hacer uso de las estructuras mas sencillas para representar una relacion M:N */
     CREATE TYPE Ofrece_inT AS OBJECT (
         entretenimiento_typ REF entretenimiento_t,
         barco_typ           REF barco_t
@@ -144,20 +161,24 @@
         VALUES (piscina_t(12,'Piscina para Adultos','Piscina para mayores de 15 anos, para que difruten los dias de navegacion',1000,'70 metros'))
     SELECT * FROM dual;
 
+
 /* INSTANCIAS PARA ENTRETENIMIENTO-BAILOTERAPIA */
     INSERT ALL
     INTO Entretenimiento
         VALUES (bailoterapia_t(13,'Bailoterapia','Bailoterapia',100,'Instructor1','1 hora',
-            ( SELECT REF(p) FROM Entretenimiento p WHERE (VALUE(p) IS OF (ONLY piscina_t)) AND p.id_actividad = 10) ))
+            ( SELECT REF(p) FROM Entretenimiento p WHERE p.id_actividad = 10)
+            ))
         INTO Entretenimiento
         VALUES (bailoterapia_t(14,'Bailoterapia Tropical','Bailoterapia Tropical',100,'Instructor1','1 hora y media',
-            ( SELECT REF(p) FROM Entretenimiento p WHERE (VALUE(p) IS OF (ONLY piscina_t)) AND p.id_actividad = 11) ))
+            ( SELECT REF(p)  FROM Entretenimiento p WHERE p.id_actividad = 11 )
+            ))
         INTO Entretenimiento
         VALUES (bailoterapia_t(15,'Bailoterapia Nocturna','Bailoterapia Nocturna',100,'Instructor1','45 min',
-            ( SELECT REF(p) FROM Entretenimiento p WHERE (VALUE(p) IS OF (ONLY piscina_t)) AND p.id_actividad = 10) ))
+            ( SELECT REF(p) FROM Entretenimiento p WHERE p.id_actividad = 10 )
+            ))
     SELECT * FROM dual;
 
-    /* INSTANCIAS PARA ENTRETENIMIENTO-BAILOTERAPIA */
+    /* INSTANCIAS PARA OFRECE_IN */
     INSERT ALL
     INTO ofrece_in
         VALUES 
