@@ -36,15 +36,15 @@ CREATE TYPE destino_t AS OBJECT(
 /
 CREATE TABLE Destino OF destino_t;
 
-CREATE TYPE destinos_mult AS VARRAY(20) OF destino_t;
+CREATE TYPE destinos_mult AS TABLE OF destino_t;
 /
 
 CREATE TABLE Ruta (
     nombre_ruta    varchar(100) PRIMARY KEY,
     regimen        varchar(50),
-    destinos       destinos_mult, /* HAY OTRA MANERA DE PROGRAMARLO DECIRLE A FRAN */
+    destinos       destinos_mult,
     es_realizada   REF barco_t SCOPE IS Barco
-); 
+) NESTED TABLE destinos STORE AS destinos_store; 
 /
 
 CREATE TYPE entretenimiento_t AS OBJECT (

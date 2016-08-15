@@ -103,6 +103,7 @@ SELECT * FROM Piscina;
 
 
 /* INSTANCIAS PARA ENTRETENIMIENTO-BAILOTERAPIA */
+INSERT ALL
 INTO Bailoterapia
 	VALUES (bailoterapia_t(13,'Bailoterapia','Bailoterapia',100,'Instructor1','1 hora',
 		( SELECT REF(p) FROM Piscina p WHERE p.id_actividad = 10) ))
