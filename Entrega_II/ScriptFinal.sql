@@ -33,31 +33,6 @@
 
 /* -------------------- BARCO -------------------- */
 /* INSERT */
-/* En caso de que insertemos un nuevo barco con ruta asignada, debemos asegurarnos que dicha
-ruta no tiene ruta asignada, y sino la tiene asignarle el nuevo barco */
-CREATE OR REPLACE TRIGGER barco_insert_before
-    BEFORE INSERT ON Barco FOR EACH ROW
-    WHEN (NEW.realiza_ruta IS NOT NULL)
-    DECLARE
-        PRAGMA AUTONOMOUS_TRANSACTION;
-        reference_Count INTEGER;
-        referencia_Unica  EXCEPTION;  -- declare exception
-    BEGIN
-        SELECT COUNT(b.nombre) INTO reference_Count
-        FROM Barco b
-        WHERE b.realiza_ruta = :NEW.realiza_ruta;
-
-        IF (reference_Count != 0) THEN
-            RAISE referencia_Unica;
-        END IF;
-
-        COMMIT;
-
-    EXCEPTION
-        WHEN referencia_Unica THEN  -- handle exception
-            DBMS_OUTPUT.PUT_LINE ('Esta ruta ya esta siendo realizada por otro barco');       
-    END;
-/
 /* En caso de que insertemos una nueva ruta con barco asignado, debemos 
 asignarle la ruta al nuevo barco */
 CREATE OR REPLACE TRIGGER barco_insert_after
@@ -70,10 +45,9 @@ CREATE OR REPLACE TRIGGER barco_insert_after
         UPDATE Ruta r 
         SET r.es_realizada = NULL
         WHERE REF(r) = :NEW.realiza_ruta;
-        COMMIT;
         /* Asignamos la nueva ruta al barco */
         UPDATE Ruta r 
-        SET r.es_realizada = (SELECT REF(b) FROM Barco b WHERE b.nombre = :NEW.nombre)
+        SET r.es_realizada = (SELECT REF(b) FROM inserted b)
         WHERE REF(r) = :NEW.realiza_ruta;
         COMMIT;
     END;
@@ -84,13 +58,10 @@ en el barco a la que estaba asignada */
 CREATE OR REPLACE TRIGGER barco_update_null
     AFTER UPDATE ON Barco FOR EACH ROW
     WHEN (NEW.realiza_ruta IS NULL AND OLD.realiza_ruta IS NOT NULL)
-    DECLARE
-        PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
         UPDATE Ruta r 
-        SET r.es_realizada = NULL 
-        WHERE r.es_realizada = (SELECT REF(b) FROM Barco b WHERE b.nombre = :OLD.nombre);
-        COMMIT;
+        SET r.es_realizada = NULL
+        WHERE REF(r) = :OLD.realiza_ruta;
     END;
 /
 /* DELETE */
@@ -98,14 +69,11 @@ CREATE OR REPLACE TRIGGER barco_update_null
 CREATE OR REPLACE TRIGGER barco_delete
     AFTER DELETE ON Barco FOR EACH ROW
     WHEN (OLD.realiza_ruta IS NOT NULL)
-    DECLARE
-        PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
         /*  */
         UPDATE Ruta r 
         SET r.es_realizada = NULL
-        WHERE r.es_realizada = (select ref(b) from Barco b where b.nombre = :old.nombre);
-        COMMIT;
+        WHERE REF(r) = :OLD.realiza_ruta;
     END;
 /
 /* -------------------- RUTA -------------------- */
@@ -136,12 +104,10 @@ en el barco a la que estaba asignada */
 CREATE OR REPLACE TRIGGER ruta_update_null
     AFTER UPDATE ON Ruta FOR EACH ROW
     WHEN (NEW.es_realizada IS NULL AND OLD.es_realizada IS NOT NULL)
-    DECLARE
-        PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
         UPDATE Barco b 
         SET b.realiza_ruta = NULL 
-        WHERE b.realiza_ruta = (SELECT REF(r) FROM Ruta r WHERE r.nombre = :OLD.nombre);
+        WHERE REF(b) = :OLD.es_realizada;
         COMMIT;
     END;
 /
@@ -168,13 +134,10 @@ CREATE OR REPLACE TRIGGER ruta_update_not_null
 /* En caso de que borremos una ruta debemos cambiar la referencia inversa al barco al que estaba asignada */
 CREATE OR REPLACE TRIGGER ruta_delete
     AFTER DELETE ON Ruta FOR EACH ROW
-    DECLARE
-        PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
         UPDATE Barco b 
         SET b.realiza_ruta = NULL
-        WHERE b.realiza_ruta = (select ref(r) from Ruta r where r.nombre = :old.nombre);
-        COMMIT;
+        WHERE REF(b) = :OLD.es_realizada;
     END;
 /
 
