@@ -28,8 +28,8 @@
 
     ALTER TYPE barco_t add attribute (realiza_ruta REF ruta_t) CASCADE;
 
-    CREATE TABLE Barco OF barco_t ( id NOT NULL, PRIMARY KEY (id) ) OBJECT IDENTIFIER IS SYSTEM GENERATED;
-    CREATE TABLE Ruta OF ruta_t ( id NOT NULL, PRIMARY KEY (id) ) OBJECT IDENTIFIER IS SYSTEM GENERATED;
+    CREATE TABLE Barco OF barco_t;
+    CREATE TABLE Ruta OF ruta_t;
 
 /* -------------------------------------------- TRIGGERS -------------------------------------------- */
 
@@ -37,8 +37,43 @@
 /* INSERT */
 /* En caso de que insertemos una nueva ruta con barco asignado, debemos 
 asignarle la ruta al nuevo barco */
-
+CREATE OR REPLACE TRIGGER barco_insert_after
+    AFTER INSERT ON Barco FOR EACH ROW
+    WHEN (NEW.realiza_ruta IS NOT NULL)
+    BEGIN
+        /* Si el barco deseado tenia una ruta asignada, libero esa ruta  */
+        /* Actualizo el barco con su nueva ruta */
+        UPDATE Ruta r 
+        SET r.es_realizada = make_ref(Barco,:new.object_id)
+        WHERE REF(r) = :NEW.realiza_ruta;   
+    END;
+/
 /* UPDATE */
+CREATE OR REPLACE TRIGGER barco_update_not_null
+    AFTER UPDATE OF realiza_ruta ON Barco FOR EACH ROW
+    WHEN (NEW.realiza_ruta IS NOT NULL AND NEW.realiza_ruta != OLD.realiza_ruta)
+    BEGIN
+        /* Libero la ruta antigua  */
+        UPDATE Ruta r 
+        SET r.es_realizada = NULL
+        WHERE REF(r) = :OLD.realiza_ruta;
+        /* */
+        UPDATE Ruta r
+        SET r.es_realizada = make_ref(Barco,:new.object_id)
+        WHERE REF(r) = :NEW.realiza_ruta;
+    END;
+/
+
+CREATE OR REPLACE TRIGGER barco_update_null
+    AFTER UPDATE OF realiza_ruta ON Barco FOR EACH ROW
+    WHEN (NEW.realiza_ruta IS NULL)
+    BEGIN
+        /* Libero la ruta antigua  */
+        UPDATE Ruta r 
+        SET r.es_realizada = NULL
+        WHERE REF(r) = :OLD.realiza_ruta;
+    END;
+/
 
 /* DELETE */
 /* En caso de que borremos un barco debemos cambiar la referencia inversa a la ruta que tenia asignada */
@@ -60,39 +95,12 @@ asignarle la ruta al barco */
 CREATE OR REPLACE TRIGGER ruta_insert_after
     AFTER INSERT ON Ruta FOR EACH ROW
     WHEN (NEW.es_realizada IS NOT NULL)
-    DECLARE
-        PRAGMA AUTONOMOUS_TRANSACTION;
-        reference_Count int;
-        referencia_Unica  EXCEPTION;  -- declare exception
     BEGIN
         /* Si el barco deseado tenia una ruta asignada, libero esa ruta  */
-        UPDATE Ruta r 
-        SET r.es_realizada=NULL
-        WHERE EXISTS (SELECT b.id FROM Barco b WHERE REF(b) = :NEW.es_realizada AND REF(r)=b.realiza_ruta);
-        /* Libero el barco de su ruta actual */
-        UPDATE Barco b 
-        SET b.realiza_ruta=NULL
-        WHERE REF(b) = :NEW.es_realizada;
         /* Actualizo el barco con su nueva ruta */
         UPDATE Barco b 
-        SET b.realiza_ruta= (SELECT REF(r) FROM Ruta r WHERE r.id = :NEW.id)
-        WHERE REF(b) = :NEW.es_realizada;
-
-        SELECT COUNT(r.id) INTO reference_Count
-        FROM Ruta r WHERE r.id = :NEW.id;
-        
-        DBMS_OUTPUT.PUT_LINE ('reference_Count = ' || reference_Count);
-        DBMS_OUTPUT.PUT_LINE ('NEW.id = ' || :NEW.id);
-
-        IF (reference_Count = 0) THEN
-            RAISE referencia_Unica;
-        END IF;
-
-        COMMIT;
-
-    EXCEPTION
-        WHEN referencia_Unica THEN  -- handle exception
-            DBMS_OUTPUT.PUT_LINE ('NO ENCONTRO NADA');       
+        SET b.realiza_ruta= make_ref(Ruta, :NEW.object_id)
+        WHERE REF(b) = :NEW.es_realizada;   
     END;
 /
 
@@ -102,37 +110,27 @@ CREATE OR REPLACE TRIGGER ruta_insert_after
 sin barco y actualizar la ruta del barco asignado */
 CREATE OR REPLACE TRIGGER ruta_update_after
     AFTER UPDATE ON Ruta FOR EACH ROW
-    WHEN (NEW.es_realizada IS NOT NULL AND (NEW.es_realizada != OLD.es_realizada OR OLD.es_realizada IS NULL))
-    DECLARE
-        PRAGMA AUTONOMOUS_TRANSACTION;
-        reference_Count int;
-        referencia_Unica  EXCEPTION;  -- declare exception
+    WHEN (NEW.es_realizada IS NOT NULL AND NEW.es_realizada != OLD.es_realizada)
     BEGIN
-        /* Si el barco deseado tenia una ruta asignada, libero esa ruta  */
-        UPDATE Ruta r 
-        SET r.es_realizada=NULL
-        WHERE EXISTS (SELECT b.id FROM Barco b WHERE REF(b) = :NEW.es_realizada AND REF(r)=b.realiza_ruta);
-        /* Actualizo el barco con su nueva ruta */
+        /* Libero la ruta antigua  */
         UPDATE Barco b 
-        SET b.realiza_ruta= (SELECT REF(r) FROM Ruta r WHERE r.id = :NEW.id)
-        WHERE REF(b) = :NEW.es_realizada;
+        SET b.realiza_ruta = NULL
+        WHERE REF(b) = :OLD.es_realizada;
         /* */
-        SELECT COUNT(r.id) INTO reference_Count
-        FROM Ruta r WHERE r.id = :NEW.id;
-        
-        DBMS_OUTPUT.PUT_LINE ('reference_Count = ' || reference_Count);
-        DBMS_OUTPUT.PUT_LINE ('NEW.id = ' || :NEW.id);
-        DBMS_OUTPUT.PUT_LINE ('OLD.id = ' || :OLD.id);
+        UPDATE Barco b
+        SET b.realiza_ruta = make_ref(Ruta,:new.object_id)
+        WHERE REF(b) = :NEW.es_realizada;
+    END;
+/
 
-        IF (reference_Count = 0) THEN
-            RAISE referencia_Unica;
-        END IF;
-
-        COMMIT;
-
-    EXCEPTION
-        WHEN referencia_Unica THEN  -- handle exception
-            DBMS_OUTPUT.PUT_LINE ('ERROR: NO ENCONTRO NADA');       
+CREATE OR REPLACE TRIGGER ruta_update_after_null
+    AFTER UPDATE ON Ruta FOR EACH ROW
+    WHEN (NEW.es_realizada IS NULL)
+    BEGIN
+        /* Libero la ruta antigua  */
+        UPDATE Barco b 
+        SET b.realiza_ruta = NULL
+        WHERE REF(b) = :OLD.es_realizada;
     END;
 /
 
