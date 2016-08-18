@@ -47,23 +47,13 @@ CREATE OR REPLACE TRIGGER barco_insert_after
         WHERE REF(r) = :NEW.realiza_ruta;
         /* Asignamos la nueva ruta al barco */
         UPDATE Ruta r 
-        SET r.es_realizada = (SELECT REF(b) FROM inserted b)
+        SET r.es_realizada = (SELECT REF(b) FROM Barco b WHERE b.nombre = :NEW.nombre)
         WHERE REF(r) = :NEW.realiza_ruta;
         COMMIT;
     END;
 /
 /* UPDATE */
-/* En caso de que dejemos a un barco sin ruta, debemos eliminar la referencia a ella 
-en el barco a la que estaba asignada */
-CREATE OR REPLACE TRIGGER barco_update_null
-    AFTER UPDATE ON Barco FOR EACH ROW
-    WHEN (NEW.realiza_ruta IS NULL AND OLD.realiza_ruta IS NOT NULL)
-    BEGIN
-        UPDATE Ruta r 
-        SET r.es_realizada = NULL
-        WHERE REF(r) = :OLD.realiza_ruta;
-    END;
-/
+
 /* DELETE */
 /* En caso de que borremos un barco debemos cambiar la referencia inversa a la ruta que tenia asignada */
 CREATE OR REPLACE TRIGGER barco_delete
@@ -99,23 +89,12 @@ CREATE OR REPLACE TRIGGER ruta_insert_after
 /
 
 /* UPDATE */
-/* En caso de que dejemos una ruta sin barco, debemos eliminar la referencia a ella 
-en el barco a la que estaba asignada */
-CREATE OR REPLACE TRIGGER ruta_update_null
-    AFTER UPDATE ON Ruta FOR EACH ROW
-    WHEN (NEW.es_realizada IS NULL AND OLD.es_realizada IS NOT NULL)
-    BEGIN
-        UPDATE Barco b 
-        SET b.realiza_ruta = NULL 
-        WHERE REF(b) = :OLD.es_realizada;
-        COMMIT;
-    END;
-/
+
 /* En Caso de que cambiemos el barco de una ruta debemos dejar a la ruta que estaba asignada anteriormente
 sin barco y actualizar la ruta del barco asignado */
 CREATE OR REPLACE TRIGGER ruta_update_not_null
     AFTER UPDATE ON Ruta FOR EACH ROW
-    WHEN (NEW.es_realizada IS NOT NULL)
+    WHEN (NEW.es_realizada IS NOT NULL AND NEW.es_realizada != OLD.es_realizada)
     DECLARE
         PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
@@ -134,6 +113,7 @@ CREATE OR REPLACE TRIGGER ruta_update_not_null
 /* En caso de que borremos una ruta debemos cambiar la referencia inversa al barco al que estaba asignada */
 CREATE OR REPLACE TRIGGER ruta_delete
     AFTER DELETE ON Ruta FOR EACH ROW
+    WHEN (OLD.es_realizada IS NOT NULL)
     BEGIN
         UPDATE Barco b 
         SET b.realiza_ruta = NULL
