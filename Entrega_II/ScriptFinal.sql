@@ -51,16 +51,20 @@ CREATE OR REPLACE TRIGGER barco_insert_after
 /* UPDATE */
 CREATE OR REPLACE TRIGGER barco_update_not_null
     AFTER UPDATE OF realiza_ruta ON Barco FOR EACH ROW
-    WHEN (NEW.realiza_ruta IS NOT NULL AND NEW.realiza_ruta != OLD.realiza_ruta)
+    WHEN ((NEW.realiza_ruta IS NULL AND OLD.realiza_ruta IS NOT NULL) 
+        OR (NEW.realiza_ruta IS NOT NULL AND NEW.realiza_ruta != OLD.realiza_ruta))
+    DECLARE
+        PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
         /* Libero la ruta antigua  */
         UPDATE Ruta r 
         SET r.es_realizada = NULL
         WHERE REF(r) = :OLD.realiza_ruta;
-        /* */
+        /* Le Asigno un nuevo barco */
         UPDATE Ruta r
         SET r.es_realizada = make_ref(Barco,:new.object_id)
         WHERE REF(r) = :NEW.realiza_ruta;
+        COMMIT;
     END;
 /
 
@@ -70,7 +74,7 @@ CREATE OR REPLACE TRIGGER barco_delete
     AFTER DELETE ON Barco FOR EACH ROW
     WHEN (OLD.realiza_ruta IS NOT NULL)
     BEGIN
-        /*  */
+        /* Libero la ruta antigua  */
         UPDATE Ruta r 
         SET r.es_realizada = NULL
         WHERE REF(r) = :OLD.realiza_ruta;
@@ -94,21 +98,24 @@ CREATE OR REPLACE TRIGGER ruta_insert_after
 /
 
 /* UPDATE */
-
 /* En Caso de que cambiemos el barco de una ruta debemos dejar a la ruta que estaba asignada anteriormente
 sin barco y actualizar la ruta del barco asignado */
 CREATE OR REPLACE TRIGGER ruta_update_after
     AFTER UPDATE ON Ruta FOR EACH ROW
-    WHEN (NEW.es_realizada IS NOT NULL AND NEW.es_realizada != OLD.es_realizada)
+    WHEN ((NEW.es_realizada IS NULL AND OLD.es_realizada IS NOT NULL) 
+        OR (NEW.es_realizada IS NOT NULL AND NEW.es_realizada != OLD.es_realizada))
+    DECLARE
+        PRAGMA AUTONOMOUS_TRANSACTION;
     BEGIN
-        /* Libero la ruta antigua  */
+        /* Libero el barco antiguo  */
         UPDATE Barco b 
         SET b.realiza_ruta = NULL
         WHERE REF(b) = :OLD.es_realizada;
-        /* */
+        /* Le Asigno una nueva ruta */
         UPDATE Barco b
         SET b.realiza_ruta = make_ref(Ruta,:new.object_id)
         WHERE REF(b) = :NEW.es_realizada;
+        COMMIT;
     END;
 /
 
@@ -119,6 +126,7 @@ CREATE OR REPLACE TRIGGER ruta_delete
     AFTER DELETE ON Ruta FOR EACH ROW
     WHEN (OLD.es_realizada IS NOT NULL)
     BEGIN
+        /* Libero el barco antiguo */
         UPDATE Barco b 
         SET b.realiza_ruta = NULL
         WHERE REF(b) = :OLD.es_realizada;
@@ -161,6 +169,10 @@ ALTER TABLE Ruta ENABLE ALL TRIGGERS;
                         (SELECT REF(oc) FROM Ruta oc WHERE oc.id = 4 ));
 
 /* -------------------------------------------- PRUEBAS UPDATE -------------------------------------------- */
+
+    UPDATE Ruta
+    SET es_realizada = NULL
+    WHERE id = 2;
 
 /* -------------------------------------------- PRUEBAS DELETE -------------------------------------------- */
 
