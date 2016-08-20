@@ -1,4 +1,4 @@
-/* DROP FOREING KEY ? */
+
 
 DROP TYPE barco_t FORCE;
 DROP TYPE destino_t FORCE;
@@ -10,14 +10,14 @@ DROP TYPE bailoterapia_t FORCE;
 DROP TYPE entretenimiento_t FORCE;
 DROP TYPE Ofrece_inT; 
 DROP TABLE Destino;                       
-DROP TABLE Ruta;                /* LISTA PERO NO SE BUSCARLA */
+DROP TABLE Ruta;                
 DROP TABLE ofrece_in;
-DROP TABLE Barco;               /* LISTA */ 
-DROP TABLE Entretenimiento;     /* LISTA */ 
-DROP TABLE Bailoterapia;        /* LISTA */
-DROP TABLE Piscina;             /* LISTA */
-DROP TABLE Taller;              /* LISTA */ 
-DROP TABLE Restaurante;         /* LISTA */       
+DROP TABLE Barco;                
+DROP TABLE Entretenimiento;      
+DROP TABLE Bailoterapia;        
+DROP TABLE Piscina;             
+DROP TABLE Taller;               
+DROP TABLE Restaurante;             
 
 CREATE TYPE barco_t as Object (
     nombre varchar(50),
