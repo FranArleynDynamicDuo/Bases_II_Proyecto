@@ -1,4 +1,5 @@
     SET AUTOCOMMIT ON;
+    SET SERVEROUTPUT ON;
 
 /* -------------------------------------------- BORRADO -------------------------------------------- */
 
@@ -53,7 +54,7 @@ BEGIN
 	WHERE  r.id = ruta_Id;
     /* Reactivo el trigger del update contrario */
     EXECUTE IMMEDIATE 'ALTER TRIGGER ruta_update_after ENABLE';
-    commit;
+    COMMIT;
 END;
 /
 /* Actualiza la referencia del barco a la ruta que recorre */
@@ -76,7 +77,7 @@ BEGIN
 	WHERE  b.id = barco_Id;
     /* Reactivo el trigger del update contrario */
     EXECUTE IMMEDIATE 'ALTER TRIGGER barco_update_not_null ENABLE';
-    commit;
+    COMMIT;
 END;
 /
 
@@ -185,15 +186,30 @@ CREATE OR REPLACE TRIGGER ruta_update_after
         DBMS_OUTPUT.PUT_LINE('---> deref(:NEW.es_realizada) ---> ' || barco_tmp.id);
         SELECT deref(:old.es_realizada) INTO barco_tmp FROM dual;
         DBMS_OUTPUT.PUT_LINE('---> deref(:old.es_realizada) ---> ' || barco_tmp.id);
-        /* Libero la ruta antigua */
-        DBMS_OUTPUT.PUT_LINE('---> Libero al barco antiguo');
+        /* Obtengo el barco al cual estaba asociado anteriormente la ruta deseada */
         SELECT DEREF(:OLD.es_realizada) INTO barco_tmp FROM DUAL;
+        /* Anulo la asociacion que tenia ese barco a la ruta deseada */
+        DBMS_OUTPUT.PUT_LINE('---> Libero al barco antiguo');
         actualizar_Barco(barco_tmp.id,NULL);
         /* Si hay barco nuevo la actualizo */
         IF(:NEW.es_realizada IS NOT NULL) THEN
             DBMS_OUTPUT.PUT_LINE('---> Actualizo al nuevo barco');
-            SELECT DEREF(:NEW.es_realizada) INTO barco_tmp FROM DUAL;
+            /* Obtengo el barco por el cual sera realizada la ruta deseada */
+            DBMS_OUTPUT.PUT_LINE('---> MORI EN EL DEREF 1');
+            SELECT DEREF(:NEW.es_realizada) INTO barco_tmp FROM DUAL; 
+            /* Obtengo la ruta anterior que realizaba ese barco */
+            DBMS_OUTPUT.PUT_LINE('---> MORI EN EL DEREF 2');
+            SELECT DEREF(barco_tmp.realiza_ruta) INTO ruta_tmp FROM DUAL;
+            /* Anulo la referencia de la ruta a ese barco */ 
+            DBMS_OUTPUT.PUT_LINE('---> MORI EN LA LLAMADA 1');
+            actualizar_Ruta(ruta_tmp.id,NULL);
+            /* Anulo la referencia del barco a su ruta antigua */
+            DBMS_OUTPUT.PUT_LINE('---> MORI EN LA LLAMADA');
+            actualizar_Barco(barco_tmp.id,NULL);
+            /* Obtengo la referncia a la ruta deseada */
+            DBMS_OUTPUT.PUT_LINE('---> MORI EN EL MAKEREF');
             SELECT make_ref(Ruta,:new.object_id) INTO  ref_tmp FROM DUAL;
+            /* Asocio el nuevo barco a la ruta deseada */
             actualizar_Barco(barco_tmp.id,ref_tmp);
         END IF;
     END;
