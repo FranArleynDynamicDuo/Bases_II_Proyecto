@@ -33,46 +33,48 @@
     CREATE TABLE Barco OF barco_t;
     CREATE TABLE Ruta OF ruta_t;
 
+/* Actualiza la referencia de la ruta al barco que la recorre */
 CREATE OR REPLACE PROCEDURE actualizar_Ruta(ruta_Id IN int,barco_Ref IN REF barco_t) IS
 pragma autonomous_transaction;
-        tmp varchar(200);
         tmp_int int;
-        barco_tmp barco_t;
-        ruta_tmp ruta_t;
 BEGIN
+    /* Desactivo el trigger del update contrario */
     EXECUTE IMMEDIATE 'ALTER TRIGGER ruta_update_after DISABLE';
     DBMS_OUTPUT.PUT_LINE('------------> actualizar_Ruta con: ');
     DBMS_OUTPUT.PUT_LINE('------------> ruta_Id=' || ruta_Id);
+    /* Revision del estado actual de las tablas */
     SELECT COUNT(*) INTO tmp_int FROM RUTA;
     DBMS_OUTPUT.PUT_LINE('------------> Se encontraron rutas ---> ' || tmp_int);
     SELECT COUNT(*) INTO tmp_int FROM Barco;
     DBMS_OUTPUT.PUT_LINE('------------> Se encontraron barcos ---> ' || tmp_int);
+    /* Efectuo la actualizacion */
 	UPDATE Ruta r
 	SET    r.es_realizada = barco_Ref
 	WHERE  r.id = ruta_Id;
+    /* Reactivo el trigger del update contrario */
     EXECUTE IMMEDIATE 'ALTER TRIGGER ruta_update_after ENABLE';
     commit;
 END;
 /
-
+/* Actualiza la referencia del barco a la ruta que recorre */
 CREATE OR REPLACE PROCEDURE actualizar_Barco(barco_Id IN int,ruta_Ref IN REF ruta_t) IS
 pragma autonomous_transaction;
-        tmp varchar(200);
         tmp_int int;
-        barco_tmp barco_t;
-        ruta_tmp ruta_t;
 BEGIN
+    /* Desactivo el trigger del update contrario */
     EXECUTE IMMEDIATE 'ALTER TRIGGER barco_update_not_null DISABLE';
     DBMS_OUTPUT.PUT_LINE('------------> actualizar_Barco');
     DBMS_OUTPUT.PUT_LINE('------------> barco_Id= ' || barco_Id);
+    /* Revision del estado actual de las tablas */
     SELECT COUNT(*) INTO tmp_int FROM RUTA;
     DBMS_OUTPUT.PUT_LINE('------------> Se encontraron rutas ---> ' || tmp_int);
     SELECT COUNT(*) INTO tmp_int FROM Barco;
     DBMS_OUTPUT.PUT_LINE('------------> Se encontraron barcos ---> ' || tmp_int);
-
+    /* Efectuo la actualizacion */
 	UPDATE Barco b
 	SET    b.realiza_ruta = ruta_Ref
 	WHERE  b.id = barco_Id;
+    /* Reactivo el trigger del update contrario */
     EXECUTE IMMEDIATE 'ALTER TRIGGER barco_update_not_null ENABLE';
     commit;
 END;
@@ -108,19 +110,21 @@ CREATE OR REPLACE TRIGGER barco_update_not_null
         ref_tmp REF barco_t;
     BEGIN
         DBMS_OUTPUT.PUT_LINE('---> ruta_update_after');
+        /* Revision del estado actual de las tablas */
         SELECT COUNT(*) INTO tmp_int FROM RUTA;
         DBMS_OUTPUT.PUT_LINE('---> Se encontraron Rutas ---> ' || tmp_int);
+        /* Revision de OLD y NEW */
         SELECT deref(:NEW.realiza_ruta) INTO ruta_tmp FROM dual;
         DBMS_OUTPUT.PUT_LINE('---> deref(:NEW.realiza_ruta) ---> ' || ruta_tmp.id);
         SELECT deref(:old.realiza_ruta) INTO ruta_tmp FROM dual;
         DBMS_OUTPUT.PUT_LINE('---> deref(:old.realiza_ruta) ---> ' || ruta_tmp.id);
-
-        DBMS_OUTPUT.PUT_LINE('---> llamo al procedure');
+        /* Libero la ruta antigua */
+        DBMS_OUTPUT.PUT_LINE('---> Libero la ruta antigua');
         SELECT DEREF(:OLD.realiza_ruta) INTO ruta_tmp FROM DUAL;
         actualizar_Ruta(ruta_tmp.id,NULL);
-
+        /* Si hay ruta nueva la actualizo */
         IF(:NEW.realiza_ruta IS NOT NULL) THEN
-            DBMS_OUTPUT.PUT_LINE('---> llamo al procedure 2');
+            DBMS_OUTPUT.PUT_LINE('---> Actualizo Con La Ruta Nueva');
             SELECT DEREF(:NEW.realiza_ruta) INTO ruta_tmp FROM DUAL;
             SELECT make_ref(Barco,:new.object_id) INTO  ref_tmp FROM DUAL;
             actualizar_Ruta(ruta_tmp.id,ref_tmp);
@@ -173,19 +177,21 @@ CREATE OR REPLACE TRIGGER ruta_update_after
         ref_tmp REF ruta_t;
     BEGIN
         DBMS_OUTPUT.PUT_LINE('---> ruta_update_after');
+        /* Revision del estado actual de las tablas */
         SELECT COUNT(*) INTO tmp_int FROM BARCO;
         DBMS_OUTPUT.PUT_LINE('---> Se encontraron barcos ---> ' || tmp_int);
+        /* Revision de OLD y NEW */
         SELECT deref(:NEW.es_realizada) INTO barco_tmp FROM dual;
         DBMS_OUTPUT.PUT_LINE('---> deref(:NEW.es_realizada) ---> ' || barco_tmp.id);
         SELECT deref(:old.es_realizada) INTO barco_tmp FROM dual;
         DBMS_OUTPUT.PUT_LINE('---> deref(:old.es_realizada) ---> ' || barco_tmp.id);
-
-        DBMS_OUTPUT.PUT_LINE('---> llamo al procedure');
+        /* Libero la ruta antigua */
+        DBMS_OUTPUT.PUT_LINE('---> Libero al barco antiguo');
         SELECT DEREF(:OLD.es_realizada) INTO barco_tmp FROM DUAL;
         actualizar_Barco(barco_tmp.id,NULL);
-
+        /* Si hay barco nuevo la actualizo */
         IF(:NEW.es_realizada IS NOT NULL) THEN
-            DBMS_OUTPUT.PUT_LINE('---> llamo al procedure 2');
+            DBMS_OUTPUT.PUT_LINE('---> Actualizo al nuevo barco');
             SELECT DEREF(:NEW.es_realizada) INTO barco_tmp FROM DUAL;
             SELECT make_ref(Ruta,:new.object_id) INTO  ref_tmp FROM DUAL;
             actualizar_Barco(barco_tmp.id,ref_tmp);
@@ -241,7 +247,6 @@ ALTER TABLE Ruta ENABLE ALL TRIGGERS;
     INSERT INTO Barco (id,nombre, capacidad, nro_cabinas, nro_cubiertas, tonelaje, eslora,realiza_ruta) VALUES
                         (4,'Buque GOVERNANT', 2733, 1162, 12, 73592, 268,
                         (SELECT REF(oc) FROM Ruta oc WHERE oc.id = 4 ));
-     commit;
 
 /* -------------------------------------------- PRUEBAS UPDATE -------------------------------------------- */
 
