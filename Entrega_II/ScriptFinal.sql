@@ -1,3 +1,5 @@
+    SET AUTOCOMMIT ON;
+
 /* -------------------------------------------- BORRADO -------------------------------------------- */
 
     DROP TYPE barco_t FORCE;
@@ -38,16 +40,17 @@ pragma autonomous_transaction;
         barco_tmp barco_t;
         ruta_tmp ruta_t;
 BEGIN
+    EXECUTE IMMEDIATE 'ALTER TRIGGER ruta_update_after DISABLE';
     DBMS_OUTPUT.PUT_LINE('------------> actualizar_Ruta con: ');
     DBMS_OUTPUT.PUT_LINE('------------> ruta_Id=' || ruta_Id);
     SELECT COUNT(*) INTO tmp_int FROM RUTA;
     DBMS_OUTPUT.PUT_LINE('------------> Se encontraron rutas ---> ' || tmp_int);
     SELECT COUNT(*) INTO tmp_int FROM Barco;
     DBMS_OUTPUT.PUT_LINE('------------> Se encontraron barcos ---> ' || tmp_int);
-
 	UPDATE Ruta r
 	SET    r.es_realizada = barco_Ref
 	WHERE  r.id = ruta_Id;
+    EXECUTE IMMEDIATE 'ALTER TRIGGER ruta_update_after ENABLE';
     commit;
 END;
 /
@@ -59,6 +62,7 @@ pragma autonomous_transaction;
         barco_tmp barco_t;
         ruta_tmp ruta_t;
 BEGIN
+    EXECUTE IMMEDIATE 'ALTER TRIGGER barco_update_not_null DISABLE';
     DBMS_OUTPUT.PUT_LINE('------------> actualizar_Barco');
     DBMS_OUTPUT.PUT_LINE('------------> barco_Id= ' || barco_Id);
     SELECT COUNT(*) INTO tmp_int FROM RUTA;
@@ -69,6 +73,7 @@ BEGIN
 	UPDATE Barco b
 	SET    b.realiza_ruta = ruta_Ref
 	WHERE  b.id = barco_Id;
+    EXECUTE IMMEDIATE 'ALTER TRIGGER barco_update_not_null ENABLE';
     commit;
 END;
 /
@@ -118,7 +123,7 @@ CREATE OR REPLACE TRIGGER barco_update_not_null
             DBMS_OUTPUT.PUT_LINE('---> llamo al procedure 2');
             SELECT DEREF(:NEW.realiza_ruta) INTO ruta_tmp FROM DUAL;
             SELECT make_ref(Barco,:new.object_id) INTO  ref_tmp FROM DUAL;
-            actualizar_Ruta(barco_tmp.id,ref_tmp);
+            actualizar_Ruta(ruta_tmp.id,ref_tmp);
         END IF;
     END;
 /
@@ -236,6 +241,7 @@ ALTER TABLE Ruta ENABLE ALL TRIGGERS;
     INSERT INTO Barco (id,nombre, capacidad, nro_cabinas, nro_cubiertas, tonelaje, eslora,realiza_ruta) VALUES
                         (4,'Buque GOVERNANT', 2733, 1162, 12, 73592, 268,
                         (SELECT REF(oc) FROM Ruta oc WHERE oc.id = 4 ));
+     commit;
 
 /* -------------------------------------------- PRUEBAS UPDATE -------------------------------------------- */
 
