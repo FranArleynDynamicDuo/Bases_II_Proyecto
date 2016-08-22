@@ -28,8 +28,8 @@
 
     ALTER TYPE barco_t add attribute (realiza_ruta REF ruta_t) CASCADE;
 
-    CREATE TABLE Barco OF barco_t;
-    CREATE TABLE Ruta OF ruta_t;
+    CREATE TABLE Barco OF barco_t (PRIMARY KEY (id));
+    CREATE TABLE Ruta OF ruta_t (PRIMARY KEY (id));
 
 /* -------------------------------------------- TRIGGERS -------------------------------------------- */
 
