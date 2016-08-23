@@ -246,6 +246,7 @@ CREATE OR REPLACE TRIGGER ruta_update_after
     WHEN ((NEW.es_realizada IS NULL AND OLD.es_realizada IS NOT NULL) 
         OR (NEW.es_realizada IS NOT NULL AND NEW.es_realizada != OLD.es_realizada))
     DECLARE
+        PRAGMA AUTONOMOUS_TRANSACTION;
         tmp_int int;
         barco_tmp barco_t;
         ruta_tmp ruta_t;
@@ -270,8 +271,13 @@ CREATE OR REPLACE TRIGGER ruta_update_after
             
             IF (barco_tmp.realiza_ruta IS NOT NULL) THEN
                 DBMS_OUTPUT.PUT_LINE('---> MORI EN LA LLAMADA 1');
-                actualizar_Ruta(3,NULL);
-                -- actualizar_Ruta_Por_Ref(barco_tmp.realiza_ruta,NULL);
+                SELECT r.id INTO tmp_int
+                FROM Ruta r
+                WHERE REF(r) = barco_tmp.realiza_ruta;
+
+                UPDATE Ruta
+                SET es_realizada = NULL
+                WHERE id =tmp_int ;
             END IF;
             
             /* Obtengo la referncia a la ruta deseada */
@@ -279,6 +285,7 @@ CREATE OR REPLACE TRIGGER ruta_update_after
             /* Asocio el nuevo barco a la ruta deseada */
             actualizar_Barco(barco_tmp.id,ref_tmp);
         END IF;
+        COMMIT;
     END;
 /
 
@@ -338,11 +345,12 @@ ALTER TABLE Ruta ENABLE ALL TRIGGERS;
     UPDATE Ruta
     SET es_realizada = NULL
     WHERE id = 2;
-
+*/
     UPDATE Ruta
     SET es_realizada = (SELECT REF(oc) FROM Barco oc WHERE oc.id = 3)
     WHERE id = 4;
 
+/*
     UPDATE Barco
     SET realiza_ruta = NULL
     WHERE id = 1;
