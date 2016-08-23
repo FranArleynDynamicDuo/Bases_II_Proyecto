@@ -51,26 +51,6 @@ BEGIN
     COMMIT;
 END;
 /
-CREATE OR REPLACE PROCEDURE actualizar_Ruta_Por_Ref(ruta_Ref IN REF ruta_t,barco_Ref IN REF barco_t) IS
-pragma autonomous_transaction;
-        tmp_barco barco_t;
-        tmp_ruta ruta_t;
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('------------> DEREF ');
-    SELECT DEREF(ruta_Ref) INTO tmp_ruta FROM DUAL;
-    DBMS_OUTPUT.PUT_LINE('------------> actualizar_Ruta');
-    /* Desactivo el trigger del update contrario */
-    DBMS_OUTPUT.PUT_LINE('------------> DESHABILITAR TRIGGER: ');
-    EXECUTE IMMEDIATE 'ALTER TRIGGER ruta_update_after DISABLE';
-    /* Efectuo la actualizacion */
-	UPDATE Ruta r
-	SET    r.es_realizada = barco_Ref
-	WHERE  REF(r) = ruta_Ref;
-    /* Reactivo el trigger del update contrario */
-    EXECUTE IMMEDIATE 'ALTER TRIGGER ruta_update_after ENABLE';
-    COMMIT;
-END;
-/
 /* Actualiza la referencia del barco a la ruta que recorre */
 CREATE OR REPLACE PROCEDURE actualizar_Barco(barco_Id IN int,ruta_Ref IN REF ruta_t) IS
 pragma autonomous_transaction;
@@ -88,28 +68,6 @@ BEGIN
     COMMIT;
 END;
 /
-
-CREATE OR REPLACE PROCEDURE actualizar_Barco_Por_Ref(barco_Ref IN REF barco_t,ruta_Ref IN REF ruta_t) IS
-pragma autonomous_transaction;
-        tmp_barco barco_t;
-        tmp_ruta ruta_t;
-BEGIN
-    DBMS_OUTPUT.PUT_LINE('------------> DEREF ');
-    SELECT DEREF(barco_Ref) INTO tmp_barco FROM DUAL;
-    DBMS_OUTPUT.PUT_LINE('------------> actualizar_Barco');
-    DBMS_OUTPUT.PUT_LINE('------------> barco_Id= ' || tmp_barco.id);
-    /* Desactivo el trigger del update contrario */
-    EXECUTE IMMEDIATE 'ALTER TRIGGER barco_update_not_null DISABLE';
-    /* Efectuo la actualizacion */
-	UPDATE Barco b
-	SET    b.realiza_ruta = ruta_Ref
-	WHERE  b.id = tmp_barco.id;
-    /* Reactivo el trigger del update contrario */
-    EXECUTE IMMEDIATE 'ALTER TRIGGER barco_update_not_null ENABLE';
-    COMMIT;
-END;
-/
-
 /* -------------------------------------------- TRIGGERS -------------------------------------------- */
 
 /* -------------------- BARCO -------------------- */
@@ -353,30 +311,53 @@ ALTER TABLE Ruta ENABLE ALL TRIGGERS;
                         (SELECT REF(oc) FROM Ruta oc WHERE oc.id = 4 ));
 
 /* -------------------------------------------- PRUEBAS UPDATE -------------------------------------------- */
-/*
+
     UPDATE Ruta
     SET es_realizada = NULL
     WHERE id = 2;
+    SELECT id, nombre, b.realiza_ruta.id, b.realiza_ruta.nombre
+    FROM Barco b;
+    SELECT id, nombre, r.es_realizada.id, r.es_realizada.nombre
+    FROM Ruta r;
 
     UPDATE Ruta
     SET es_realizada = (SELECT REF(oc) FROM Barco oc WHERE oc.id = 3)
     WHERE id = 4;
-
+    SELECT id, nombre, b.realiza_ruta.id, b.realiza_ruta.nombre
+    FROM Barco b;
+    SELECT id, nombre, r.es_realizada.id, r.es_realizada.nombre
+    FROM Ruta r;
 
     UPDATE Barco
     SET realiza_ruta = NULL
     WHERE id = 1;
-*/
+    SELECT id, nombre, b.realiza_ruta.id, b.realiza_ruta.nombre
+    FROM Barco b;
+    SELECT id, nombre, r.es_realizada.id, r.es_realizada.nombre
+    FROM Ruta r;
+
     UPDATE Barco
     SET realiza_ruta = (SELECT REF(oc) FROM Ruta oc WHERE oc.id = 3)
     WHERE id = 2;
+    SELECT id, nombre, b.realiza_ruta.id, b.realiza_ruta.nombre
+    FROM Barco b;
+    SELECT id, nombre, r.es_realizada.id, r.es_realizada.nombre
+    FROM Ruta r;
 
 /* -------------------------------------------- PRUEBAS DELETE -------------------------------------------- */
-/*
+
     DELETE FROM Barco
     WHERE id=4;
+    SELECT id, nombre, b.realiza_ruta.id, b.realiza_ruta.nombre
+    FROM Barco b;
+    SELECT id, nombre, r.es_realizada.id, r.es_realizada.nombre
+    FROM Ruta r;
 
     DELETE FROM Ruta
     WHERE id=1;
-*/
+    SELECT id, nombre, b.realiza_ruta.id, b.realiza_ruta.nombre
+    FROM Barco b;
+    SELECT id, nombre, r.es_realizada.id, r.es_realizada.nombre
+    FROM Ruta r;
+
 /* -------------------------------------------- CONSULTAS -------------------------------------------- */
