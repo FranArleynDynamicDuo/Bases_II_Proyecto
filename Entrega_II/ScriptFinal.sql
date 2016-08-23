@@ -1,13 +1,13 @@
+/* -------------------------------------------- CONFIGURACION -------------------------------------------- */
     SET AUTOCOMMIT ON;
-
 /* -------------------------------------------- BORRADO -------------------------------------------- */
-
+    /* Borramos los tipos y tablas para empezar desde 0 */
     DROP TYPE barco_t FORCE;
     DROP TYPE ruta_t FORCE;
     DROP TABLE Barco CASCADE CONSTRAINTS;                       
     DROP TABLE Ruta CASCADE CONSTRAINTS;
-
 /* -------------------------------------------- CREACION -------------------------------------------- */
+    /* Creamos el tipo Barco */
     CREATE TYPE barco_t AS Object (
         id INTEGER,
         nombre VARCHAR(50),
@@ -18,6 +18,7 @@
         eslora INTEGER
     ); 
     /
+    /* Creamos el tipo ruta */
     CREATE TYPE ruta_t AS Object (
         id INTEGER,
         nombre    VARCHAR(100),
@@ -25,12 +26,19 @@
         es_realizada   REF barco_t
     ); 
     /  
-
+    /* Agregamos la referencia que a ruta en barco */
     ALTER TYPE barco_t add attribute (realiza_ruta REF ruta_t) CASCADE;
+<<<<<<< HEAD
 
     CREATE TABLE Barco OF barco_t (PRIMARY KEY (id));
     CREATE TABLE Ruta OF ruta_t (PRIMARY KEY (id));
 
+=======
+    /* Creamos Las Tablas */
+    CREATE TABLE Barco OF barco_t;
+    CREATE TABLE Ruta OF ruta_t;
+/* -------------------------------------------- STORED PROCEDURES -------------------------------------------- */
+>>>>>>> df11b01077bb96010a30f9af4e01d4104b4e5f07
 /* Actualiza la referencia de la ruta al barco que la recorre */
 CREATE OR REPLACE PROCEDURE actualizar_Ruta(ruta_Id IN int,barco_Ref IN REF barco_t) IS
 pragma autonomous_transaction;
@@ -246,7 +254,8 @@ ALTER TABLE Ruta ENABLE ALL TRIGGERS;
                 (3,'4 Noches - Caribe Sur  (Puerto Limon)', 'Todo Incluido',
                 ( SELECT REF(oc) FROM Barco oc WHERE oc.id = 3) )
     SELECT * from dual;
-    /* PODEMOS CREAR RUTAS SIN BARCO ASIGNADO */
+   
+ /* PODEMOS CREAR RUTAS SIN BARCO ASIGNADO */
     INSERT INTO Ruta (id,nombre, regimen, es_realizada) VALUES 
         (4,'2 Noches - Venezuela', 'Todo Incluido',NULL );
     /* AL CREAR BARCOS CON RUTAS ASIGNADAS LAS REFERENCIAS DE LAS RUTAS A LOS BARCOS SE ACTUALIZA */
@@ -255,50 +264,60 @@ ALTER TABLE Ruta ENABLE ALL TRIGGERS;
                         (SELECT REF(oc) FROM Ruta oc WHERE oc.id = 4 ));
 
 /* -------------------------------------------- PRUEBAS UPDATE -------------------------------------------- */
-
+    /* Anulando una asociacion de ruta a barco */
     UPDATE Ruta
     SET es_realizada = NULL
     WHERE id = 2;
+    /* Mostramos el estado de las tablas para verificar el efecto de la operacion */
     SELECT id, nombre, b.realiza_ruta.id, b.realiza_ruta.nombre
     FROM Barco b;
     SELECT id, nombre, r.es_realizada.id, r.es_realizada.nombre
     FROM Ruta r;
 
+    /* Cambiando el barco de una ruta por otro barco */
     UPDATE Ruta
     SET es_realizada = (SELECT REF(oc) FROM Barco oc WHERE oc.id = 3)
     WHERE id = 4;
+    /* Mostramos el estado de las tablas para verificar el efecto de la operacion */
     SELECT id, nombre, b.realiza_ruta.id, b.realiza_ruta.nombre
     FROM Barco b;
     SELECT id, nombre, r.es_realizada.id, r.es_realizada.nombre
     FROM Ruta r;
 
+    /* Anulando una asociacion de barco a ruta */
     UPDATE Barco
     SET realiza_ruta = NULL
     WHERE id = 1;
+    /* Mostramos el estado de las tablas para verificar el efecto de la operacion */
     SELECT id, nombre, b.realiza_ruta.id, b.realiza_ruta.nombre
     FROM Barco b;
     SELECT id, nombre, r.es_realizada.id, r.es_realizada.nombre
     FROM Ruta r;
 
+    /* Cambiando la ruta de un barco por otra */
     UPDATE Barco
     SET realiza_ruta = (SELECT REF(oc) FROM Ruta oc WHERE oc.id = 3)
     WHERE id = 2;
+    /* Mostramos el estado de las tablas para verificar el efecto de la operacion */
     SELECT id, nombre, b.realiza_ruta.id, b.realiza_ruta.nombre
     FROM Barco b;
     SELECT id, nombre, r.es_realizada.id, r.es_realizada.nombre
     FROM Ruta r;
 
 /* -------------------------------------------- PRUEBAS DELETE -------------------------------------------- */
-
+    /* Eliminando un barco */
     DELETE FROM Barco
     WHERE id=4;
+    /* Mostramos el estado de las tablas para verificar el efecto de la operacion */
     SELECT id, nombre, b.realiza_ruta.id, b.realiza_ruta.nombre
     FROM Barco b;
     SELECT id, nombre, r.es_realizada.id, r.es_realizada.nombre
     FROM Ruta r;
 
+    /* Eliminando una ruta */
     DELETE FROM Ruta
     WHERE id=1;
+    /* Mostramos el estado de las tablas para verificar el efecto de la operacion */
     SELECT id, nombre, b.realiza_ruta.id, b.realiza_ruta.nombre
     FROM Barco b;
     SELECT id, nombre, r.es_realizada.id, r.es_realizada.nombre
