@@ -133,17 +133,33 @@ END;
 
 /* -------------------- BARCO -------------------- */
 /* INSERT */
-/* En caso de que insertemos una nueva ruta con barco asignado, debemos 
-asignarle la ruta al nuevo barco */
 CREATE OR REPLACE TRIGGER barco_insert_after
     AFTER INSERT ON Barco FOR EACH ROW
     WHEN (NEW.realiza_ruta IS NOT NULL)
+    DECLARE
+        tmp varchar(200);
+        tmp_int int;
+        barco_tmp barco_t;
+        ruta_tmp ruta_t;
+        ref_tmp REF barco_t;
     BEGIN
-        /* Si el barco deseado tenia una ruta asignada, libero esa ruta  */
-        /* Actualizo el barco con su nueva ruta */
-        UPDATE Ruta r 
-        SET r.es_realizada = make_ref(Barco,:new.object_id)
-        WHERE REF(r) = :NEW.realiza_ruta;   
+        DBMS_OUTPUT.PUT_LINE('---> barco_insert_after');    
+        /* Obtnego la ruta que quiero que realice el barco */
+        SELECT DEREF(:NEW.realiza_ruta) INTO ruta_tmp FROM DUAL;
+        /*
+            AQUI ESTA EL PROBLEMA, SI TRATO DE HACER EL DEREF FUERA DEL PROCEDIMIENTO
+            ME DA TABLA MUTANTE, TRATE DE HACER EL DEREF DENTRO DEL PROCEDIMIENTO Y 
+            SE QUEDA TRANCADO
+        */
+        /* Si la ruta anterior tenia un barco asociado debo liberarlo */
+        IF(ruta_tmp.es_realizada IS NOT NULL) THEN
+            DBMS_OUTPUT.PUT_LINE('---> MORI EN LA LLAMADA 1');
+            actualizar_Barco_Por_Ref(ruta_tmp.es_realizada,NULL);           
+        END IF;
+        /* Obtengo la referncia a la ruta deseada */
+        SELECT make_ref(Barco,:new.object_id) INTO  ref_tmp FROM DUAL;
+        /* Asocio el nuevo barco a la ruta deseada */
+        actualizar_Ruta(ruta_tmp.id,ref_tmp);
     END;
 /
 /* UPDATE */
@@ -200,13 +216,13 @@ CREATE OR REPLACE TRIGGER barco_update_not_null
 
 
 /* DELETE */
-/* En caso de que borremos un barco debemos cambiar la referencia inversa a la ruta que tenia asignada */
 CREATE OR REPLACE TRIGGER barco_delete
     AFTER DELETE ON Barco FOR EACH ROW
     WHEN (OLD.realiza_ruta IS NOT NULL)
         DECLARE
         ruta_tmp ruta_t;
     BEGIN
+        DBMS_OUTPUT.PUT_LINE('---> barco_delete');   
         /* Busco la ruta asociada al barco que se va a eliminar */
         SELECT DEREF(:OLD.realiza_ruta) INTO ruta_tmp FROM DUAL;
         /* Libero a la ruta antigua */
@@ -215,24 +231,37 @@ CREATE OR REPLACE TRIGGER barco_delete
 /
 /* -------------------- RUTA -------------------- */
 /* INSERT */
-/* En caso de que insertemos una nueva ruta con barco asignado, debemos 
-asignarle la ruta al barco */
-
 CREATE OR REPLACE TRIGGER ruta_insert_after
     AFTER INSERT ON Ruta FOR EACH ROW
     WHEN (NEW.es_realizada IS NOT NULL)
+    DECLARE
+        tmp varchar(200);
+        tmp_int int;
+        barco_tmp barco_t;
+        ruta_tmp ruta_t;
+        ref_tmp REF ruta_t;
     BEGIN
-        /* Si el barco deseado tenia una ruta asignada, libero esa ruta  */
-        /* Actualizo el barco con su nueva ruta */
-        UPDATE Barco b 
-        SET b.realiza_ruta= make_ref(Ruta, :NEW.object_id)
-        WHERE REF(b) = :NEW.es_realizada;   
+        DBMS_OUTPUT.PUT_LINE('---> ruta_insert_after');    
+        /* Obtengo obtengo el barco que quiero asociar a la ruta insertada */
+        SELECT DEREF(:NEW.es_realizada) INTO barco_tmp FROM DUAL;
+        /*
+            AQUI ESTA EL PROBLEMA, SI TRATO DE HACER EL DEREF FUERA DEL PROCEDIMIENTO
+            ME DA TABLA MUTANTE, TRATE DE HACER EL DEREF DENTRO DEL PROCEDIMIENTO Y 
+            SE QUEDA TRANCADO
+        */
+        /* Si el barco deseado tenia una ruta asociada debemos liberarla */
+        IF(barco_tmp.realiza_ruta IS NOT NULL) THEN
+            DBMS_OUTPUT.PUT_LINE('---> MORI EN LA LLAMADA 1');
+            actualizar_Ruta_Por_Ref(barco_tmp.realiza_ruta,NULL);           
+        END IF;
+        /* Obtengo la referencia a la ruta insertada */
+        SELECT make_ref(Ruta,:new.object_id) INTO  ref_tmp FROM DUAL;
+        /* Asocio el nuevo barco a la ruta insertada */
+        actualizar_Barco(barco_tmp.id,ref_tmp);
     END;
 /
 
 /* UPDATE */
-/* En Caso de que cambiemos el barco de una ruta debemos dejar a la ruta que estaba asignada anteriormente
-sin barco y actualizar la ruta del barco asignado */
 CREATE OR REPLACE TRIGGER ruta_update_after
     AFTER UPDATE ON Ruta FOR EACH ROW
     WHEN ((NEW.es_realizada IS NULL AND OLD.es_realizada IS NOT NULL) 
@@ -286,13 +315,13 @@ CREATE OR REPLACE TRIGGER ruta_update_after
 
 
 /* DELETE */
-/* En caso de que borremos una ruta debemos cambiar la referencia inversa al barco al que estaba asignada */
 CREATE OR REPLACE TRIGGER ruta_delete
     AFTER DELETE ON Ruta FOR EACH ROW
     WHEN (OLD.es_realizada IS NOT NULL)
     DECLARE
         barco_tmp barco_t;
     BEGIN
+        DBMS_OUTPUT.PUT_LINE('---> ruta_delete');   
         /* Busco el barco asociado a la ruta que se va a eliminar */
         SELECT DEREF(:OLD.es_realizada) INTO barco_tmp FROM DUAL;
         /* Libero el barco antiguo */
