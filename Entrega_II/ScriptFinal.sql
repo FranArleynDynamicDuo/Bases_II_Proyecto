@@ -28,17 +28,10 @@
     /  
     /* Agregamos la referencia que a ruta en barco */
     ALTER TYPE barco_t add attribute (realiza_ruta REF ruta_t) CASCADE;
-<<<<<<< HEAD
-
-    CREATE TABLE Barco OF barco_t (PRIMARY KEY (id));
-    CREATE TABLE Ruta OF ruta_t (PRIMARY KEY (id));
-
-=======
     /* Creamos Las Tablas */
     CREATE TABLE Barco OF barco_t;
     CREATE TABLE Ruta OF ruta_t;
 /* -------------------------------------------- STORED PROCEDURES -------------------------------------------- */
->>>>>>> df11b01077bb96010a30f9af4e01d4104b4e5f07
 /* Actualiza la referencia de la ruta al barco que la recorre */
 CREATE OR REPLACE PROCEDURE actualizar_Ruta(ruta_Id IN int,barco_Ref IN REF barco_t) IS
 pragma autonomous_transaction;
@@ -322,5 +315,3 @@ ALTER TABLE Ruta ENABLE ALL TRIGGERS;
     FROM Barco b;
     SELECT id, nombre, r.es_realizada.id, r.es_realizada.nombre
     FROM Ruta r;
-
-/* -------------------------------------------- CONSULTAS -------------------------------------------- */
