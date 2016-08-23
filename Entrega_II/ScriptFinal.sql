@@ -1,5 +1,4 @@
     SET AUTOCOMMIT ON;
-    SET SERVEROUTPUT ON;
 
 /* -------------------------------------------- BORRADO -------------------------------------------- */
 
@@ -9,7 +8,6 @@
     DROP TABLE Ruta CASCADE CONSTRAINTS;
 
 /* -------------------------------------------- CREACION -------------------------------------------- */
-
     CREATE TYPE barco_t AS Object (
         id INTEGER,
         nombre VARCHAR(50),
@@ -20,7 +18,6 @@
         eslora INTEGER
     ); 
     /
-    
     CREATE TYPE ruta_t AS Object (
         id INTEGER,
         nombre    VARCHAR(100),
@@ -38,8 +35,6 @@
 CREATE OR REPLACE PROCEDURE actualizar_Ruta(ruta_Id IN int,barco_Ref IN REF barco_t) IS
 pragma autonomous_transaction;
 BEGIN
-    DBMS_OUTPUT.PUT_LINE('------------> actualizar_Ruta con: ');
-    DBMS_OUTPUT.PUT_LINE('------------> ruta_Id=' || ruta_Id);
     /* Desactivo el trigger del update contrario */
     EXECUTE IMMEDIATE 'ALTER TRIGGER ruta_update_after DISABLE';
     /* Efectuo la actualizacion */
@@ -55,8 +50,6 @@ END;
 CREATE OR REPLACE PROCEDURE actualizar_Barco(barco_Id IN int,ruta_Ref IN REF ruta_t) IS
 pragma autonomous_transaction;
 BEGIN
-    DBMS_OUTPUT.PUT_LINE('------------> actualizar_Barco');
-    DBMS_OUTPUT.PUT_LINE('------------> barco_Id= ' || barco_Id);
     /* Desactivo el trigger del update contrario */
     EXECUTE IMMEDIATE 'ALTER TRIGGER barco_update_not_null DISABLE';
     /* Efectuo la actualizacion */
@@ -69,7 +62,6 @@ BEGIN
 END;
 /
 /* -------------------------------------------- TRIGGERS -------------------------------------------- */
-
 /* -------------------- BARCO -------------------- */
 /* INSERT */
 CREATE OR REPLACE TRIGGER barco_insert_after
@@ -80,22 +72,19 @@ CREATE OR REPLACE TRIGGER barco_insert_after
         tmp_int int;
         ruta_tmp ruta_t;
         ref_tmp REF barco_t;
-    BEGIN
-        DBMS_OUTPUT.PUT_LINE('---> barco_insert_after');    
+    BEGIN   
         /* Obtnego la ruta que quiero que realice el barco */
         SELECT DEREF(:NEW.realiza_ruta) INTO ruta_tmp FROM DUAL;
         /* Si la ruta anterior tenia un barco asociado debo liberarlo */
-        
         IF(ruta_tmp.es_realizada IS NOT NULL) THEN
             SELECT b.id INTO tmp_int
             FROM Barco b
             WHERE REF(b) = ruta_tmp.es_realizada;
-
+            /* Libero el barco */
             UPDATE Barco
             SET realiza_ruta = NULL
             WHERE id =tmp_int ;         
         END IF;
-        
         /* Obtengo la referncia a la ruta deseada */
         SELECT make_ref(Barco,:new.object_id) INTO  ref_tmp FROM DUAL;
         /* Asocio el nuevo barco a la ruta deseada */
@@ -110,42 +99,28 @@ CREATE OR REPLACE TRIGGER barco_update_not_null
         OR (NEW.realiza_ruta IS NOT NULL AND NEW.realiza_ruta != OLD.realiza_ruta))
     DECLARE
         PRAGMA AUTONOMOUS_TRANSACTION;
-        tmp varchar(200);
         tmp_int int;
-        barco_tmp barco_t;
         ruta_tmp ruta_t;
         ref_tmp REF barco_t;
     BEGIN
-        DBMS_OUTPUT.PUT_LINE('---> ruta_update_after');
-        /* Revision del estado actual de las tablas */
-        SELECT COUNT(*) INTO tmp_int FROM RUTA;
-        DBMS_OUTPUT.PUT_LINE('---> Se encontraron Rutas ---> ' || tmp_int);
-        /* Revision de OLD y NEW */
-        SELECT deref(:NEW.realiza_ruta) INTO ruta_tmp FROM dual;
-        DBMS_OUTPUT.PUT_LINE('---> deref(:NEW.realiza_ruta) ---> ' || ruta_tmp.id);
-        SELECT deref(:old.realiza_ruta) INTO ruta_tmp FROM dual;
-        DBMS_OUTPUT.PUT_LINE('---> deref(:old.realiza_ruta) ---> ' || ruta_tmp.id);
         /* Obtengo la ruta a la cual estaba asociada anteriormente el barco deseado */
         SELECT DEREF(:OLD.realiza_ruta) INTO ruta_tmp FROM DUAL;
         /* Anulo la asociacion que tenia esa ruta al barco deseado */
-        DBMS_OUTPUT.PUT_LINE('---> Libero a la ruta antigua');
         actualizar_Ruta(ruta_tmp.id,NULL);
         /* Si hay ruta nueva la actualizo */
         IF(:NEW.realiza_ruta IS NOT NULL) THEN
             /* Obtengo la ruta que realizara el barco deseado deseada */
             SELECT DEREF(:NEW.realiza_ruta) INTO ruta_tmp FROM DUAL; 
             /* Obtengo la ruta anterior que realizaba ese barco si la tiene */
-
             IF (ruta_tmp.es_realizada IS NOT NULL) THEN
                 SELECT b.id INTO tmp_int
                 FROM Barco b
                 WHERE REF(b) = ruta_tmp.es_realizada;
-
+                /* Libero el barco */
                 UPDATE Barco
                 SET realiza_ruta = NULL
                 WHERE id =tmp_int ;
             END IF;
-            
             /* Obtengo la referncia a la ruta deseada */
             SELECT make_ref(Barco,:new.object_id) INTO  ref_tmp FROM DUAL;
             /* Asocio el nuevo barco a la ruta deseada */
@@ -154,16 +129,13 @@ CREATE OR REPLACE TRIGGER barco_update_not_null
         COMMIT;
     END;
 /
-
-
 /* DELETE */
 CREATE OR REPLACE TRIGGER barco_delete
     AFTER DELETE ON Barco FOR EACH ROW
     WHEN (OLD.realiza_ruta IS NOT NULL)
         DECLARE
         ruta_tmp ruta_t;
-    BEGIN
-        DBMS_OUTPUT.PUT_LINE('---> barco_delete');   
+    BEGIN  
         /* Busco la ruta asociada al barco que se va a eliminar */
         SELECT DEREF(:OLD.realiza_ruta) INTO ruta_tmp FROM DUAL;
         /* Libero a la ruta antigua */
@@ -179,29 +151,20 @@ CREATE OR REPLACE TRIGGER ruta_insert_after
         PRAGMA AUTONOMOUS_TRANSACTION;
         tmp_int int;
         barco_tmp barco_t;
-        ruta_tmp ruta_t;
         ref_tmp REF ruta_t;
-    BEGIN
-        DBMS_OUTPUT.PUT_LINE('---> ruta_insert_after');    
+    BEGIN   
         /* Obtengo obtengo el barco que quiero asociar a la ruta insertada */
         SELECT DEREF(:NEW.es_realizada) INTO barco_tmp FROM DUAL;
-        /*
-            AQUI ESTA EL PROBLEMA, SI TRATO DE HACER EL DEREF FUERA DEL PROCEDIMIENTO
-            ME DA TABLA MUTANTE, TRATE DE HACER EL DEREF DENTRO DEL PROCEDIMIENTO Y 
-            SE QUEDA TRANCADO
-        */
-        /* Si el barco deseado tenia una ruta asociada debemos liberarla */
-        
+        /* Si el barco deseado tenia una ruta asociada debemos liberarla */ 
         IF(barco_tmp.realiza_ruta IS NOT NULL) THEN
             SELECT r.id INTO tmp_int
             FROM Ruta r
             WHERE REF(r) = barco_tmp.realiza_ruta;
-
+            /* Libero la ruta */
             UPDATE Ruta
             SET es_realizada = NULL
             WHERE id =tmp_int;          
         END IF;
-        
         /* Obtengo la referencia a la ruta insertada */
         SELECT make_ref(Ruta,:new.object_id) INTO  ref_tmp FROM DUAL;
         /* Asocio el nuevo barco a la ruta insertada */
@@ -209,7 +172,6 @@ CREATE OR REPLACE TRIGGER ruta_insert_after
         COMMIT;
     END;
 /
-
 /* UPDATE */
 CREATE OR REPLACE TRIGGER ruta_update_after
     AFTER UPDATE ON Ruta FOR EACH ROW
@@ -219,37 +181,26 @@ CREATE OR REPLACE TRIGGER ruta_update_after
         PRAGMA AUTONOMOUS_TRANSACTION;
         tmp_int int;
         barco_tmp barco_t;
-        ruta_tmp ruta_t;
         ref_tmp REF ruta_t;
     BEGIN
-        DBMS_OUTPUT.PUT_LINE('---> ruta_update_after');
         /* Obtengo el barco al cual estaba asociado anteriormente la ruta deseada */
         SELECT DEREF(:OLD.es_realizada) INTO barco_tmp FROM DUAL;
         /* Anulo la asociacion que tenia ese barco a la ruta deseada */
-        DBMS_OUTPUT.PUT_LINE('---> Libero al barco antiguo');
         actualizar_Barco(barco_tmp.id,NULL);
         /* Si hay barco nuevo la actualizo */
         IF(:NEW.es_realizada IS NOT NULL) THEN
             /* Obtengo el barco por el cual sera realizada la ruta deseada */
             SELECT DEREF(:NEW.es_realizada) INTO barco_tmp FROM DUAL; 
-            /* Obtengo la ruta anterior que realizaba ese barco si la tiene */
-            /*
-                AQUI ESTA EL PROBLEMA, SI TRATO DE HACER EL DEREF FUERA DEL PROCEDIMIENTO
-                ME DA TABLA MUTANTE, TRATE DE HACER EL DEREF DENTRO DEL PROCEDIMIENTO Y 
-                SE QUEDA TRANCADO
-            */
-            
+            /* Obtengo la ruta anterior que realizaba ese barco si la tiene */      
             IF (barco_tmp.realiza_ruta IS NOT NULL) THEN
-                DBMS_OUTPUT.PUT_LINE('---> MORI EN LA LLAMADA 1');
                 SELECT r.id INTO tmp_int
                 FROM Ruta r
                 WHERE REF(r) = barco_tmp.realiza_ruta;
-
+                /* Libero la ruta */
                 UPDATE Ruta
                 SET es_realizada = NULL
                 WHERE id =tmp_int;
             END IF;
-            
             /* Obtengo la referncia a la ruta deseada */
             SELECT make_ref(Ruta,:new.object_id) INTO  ref_tmp FROM DUAL;
             /* Asocio el nuevo barco a la ruta deseada */
@@ -258,29 +209,22 @@ CREATE OR REPLACE TRIGGER ruta_update_after
         COMMIT;
     END;
 /
-
-
 /* DELETE */
 CREATE OR REPLACE TRIGGER ruta_delete
     AFTER DELETE ON Ruta FOR EACH ROW
     WHEN (OLD.es_realizada IS NOT NULL)
     DECLARE
         barco_tmp barco_t;
-    BEGIN
-        DBMS_OUTPUT.PUT_LINE('---> ruta_delete');   
+    BEGIN 
         /* Busco el barco asociado a la ruta que se va a eliminar */
         SELECT DEREF(:OLD.es_realizada) INTO barco_tmp FROM DUAL;
         /* Libero el barco antiguo */
         actualizar_Barco(barco_tmp.id,NULL);
     END;
 /
-
 ALTER TABLE Barco ENABLE ALL TRIGGERS;
 ALTER TABLE Ruta ENABLE ALL TRIGGERS;
-
 /* -------------------------------------------- PRUEBAS INSERT -------------------------------------------- */
-
-
     /* PODEMOS CREAR BARCOS SIN RUTAS ASIGNADAS */
     INSERT ALL 
         INTO Barco (id,nombre, capacidad, nro_cabinas, nro_cubiertas, tonelaje, eslora,realiza_ruta) VALUES
