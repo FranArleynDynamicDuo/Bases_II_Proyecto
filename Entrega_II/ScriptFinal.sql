@@ -118,28 +118,31 @@ CREATE OR REPLACE TRIGGER barco_insert_after
     AFTER INSERT ON Barco FOR EACH ROW
     WHEN (NEW.realiza_ruta IS NOT NULL)
     DECLARE
+        PRAGMA AUTONOMOUS_TRANSACTION;
+        tmp_int int;
         ruta_tmp ruta_t;
         ref_tmp REF barco_t;
     BEGIN
         DBMS_OUTPUT.PUT_LINE('---> barco_insert_after');    
         /* Obtnego la ruta que quiero que realice el barco */
         SELECT DEREF(:NEW.realiza_ruta) INTO ruta_tmp FROM DUAL;
-        /*
-            AQUI ESTA EL PROBLEMA, SI TRATO DE HACER EL DEREF FUERA DEL PROCEDIMIENTO
-            ME DA TABLA MUTANTE, TRATE DE HACER EL DEREF DENTRO DEL PROCEDIMIENTO Y 
-            SE QUEDA TRANCADO
-        */
         /* Si la ruta anterior tenia un barco asociado debo liberarlo */
-        /*
+        
         IF(ruta_tmp.es_realizada IS NOT NULL) THEN
-            DBMS_OUTPUT.PUT_LINE('---> MORI EN LA LLAMADA 1');
-            actualizar_Barco_Por_Ref(ruta_tmp.es_realizada,NULL);           
+            SELECT b.id INTO tmp_int
+            FROM Barco b
+            WHERE REF(b) = ruta_tmp.es_realizada;
+
+            UPDATE Barco
+            SET realiza_ruta = NULL
+            WHERE id =tmp_int ;         
         END IF;
-        */
+        
         /* Obtengo la referncia a la ruta deseada */
         SELECT make_ref(Barco,:new.object_id) INTO  ref_tmp FROM DUAL;
         /* Asocio el nuevo barco a la ruta deseada */
         actualizar_Ruta(ruta_tmp.id,ref_tmp);
+        COMMIT;
     END;
 /
 /* UPDATE */
@@ -148,6 +151,7 @@ CREATE OR REPLACE TRIGGER barco_update_not_null
     WHEN ((NEW.realiza_ruta IS NULL AND OLD.realiza_ruta IS NOT NULL) 
         OR (NEW.realiza_ruta IS NOT NULL AND NEW.realiza_ruta != OLD.realiza_ruta))
     DECLARE
+        PRAGMA AUTONOMOUS_TRANSACTION;
         tmp varchar(200);
         tmp_int int;
         barco_tmp barco_t;
@@ -173,22 +177,23 @@ CREATE OR REPLACE TRIGGER barco_update_not_null
             /* Obtengo la ruta que realizara el barco deseado deseada */
             SELECT DEREF(:NEW.realiza_ruta) INTO ruta_tmp FROM DUAL; 
             /* Obtengo la ruta anterior que realizaba ese barco si la tiene */
-            /*
-                AQUI ESTA EL PROBLEMA, SI TRATO DE HACER EL DEREF FUERA DEL PROCEDIMIENTO
-                ME DA TABLA MUTANTE, TRATE DE HACER EL DEREF DENTRO DEL PROCEDIMIENTO Y 
-                SE QUEDA TRANCADO
-            */
-            /*
+
             IF (ruta_tmp.es_realizada IS NOT NULL) THEN
-                DBMS_OUTPUT.PUT_LINE('---> MORI EN LA LLAMADA 1');
-                actualizar_Barco_Por_Ref(ruta_tmp.es_realizada,NULL);
+                SELECT b.id INTO tmp_int
+                FROM Barco b
+                WHERE REF(b) = ruta_tmp.es_realizada;
+
+                UPDATE Barco
+                SET realiza_ruta = NULL
+                WHERE id =tmp_int ;
             END IF;
-            */
+            
             /* Obtengo la referncia a la ruta deseada */
             SELECT make_ref(Barco,:new.object_id) INTO  ref_tmp FROM DUAL;
             /* Asocio el nuevo barco a la ruta deseada */
             actualizar_Ruta(ruta_tmp.id,ref_tmp);
         END IF;
+        COMMIT;
     END;
 /
 
@@ -213,6 +218,7 @@ CREATE OR REPLACE TRIGGER ruta_insert_after
     AFTER INSERT ON Ruta FOR EACH ROW
     WHEN (NEW.es_realizada IS NOT NULL)
     DECLARE
+        PRAGMA AUTONOMOUS_TRANSACTION;
         tmp_int int;
         barco_tmp barco_t;
         ruta_tmp ruta_t;
@@ -229,14 +235,20 @@ CREATE OR REPLACE TRIGGER ruta_insert_after
         /* Si el barco deseado tenia una ruta asociada debemos liberarla */
         
         IF(barco_tmp.realiza_ruta IS NOT NULL) THEN
-            DBMS_OUTPUT.PUT_LINE('---> MORI EN LA LLAMADA 1');
-            actualizar_Ruta_Por_Ref(barco_tmp.realiza_ruta,NULL);           
+            SELECT r.id INTO tmp_int
+            FROM Ruta r
+            WHERE REF(r) = barco_tmp.realiza_ruta;
+
+            UPDATE Ruta
+            SET es_realizada = NULL
+            WHERE id =tmp_int;          
         END IF;
         
         /* Obtengo la referencia a la ruta insertada */
         SELECT make_ref(Ruta,:new.object_id) INTO  ref_tmp FROM DUAL;
         /* Asocio el nuevo barco a la ruta insertada */
         actualizar_Barco(barco_tmp.id,ref_tmp);
+        COMMIT;
     END;
 /
 
@@ -277,7 +289,7 @@ CREATE OR REPLACE TRIGGER ruta_update_after
 
                 UPDATE Ruta
                 SET es_realizada = NULL
-                WHERE id =tmp_int ;
+                WHERE id =tmp_int;
             END IF;
             
             /* Obtengo la referncia a la ruta deseada */
@@ -345,20 +357,19 @@ ALTER TABLE Ruta ENABLE ALL TRIGGERS;
     UPDATE Ruta
     SET es_realizada = NULL
     WHERE id = 2;
-*/
+
     UPDATE Ruta
     SET es_realizada = (SELECT REF(oc) FROM Barco oc WHERE oc.id = 3)
     WHERE id = 4;
 
-/*
+
     UPDATE Barco
     SET realiza_ruta = NULL
     WHERE id = 1;
-
+*/
     UPDATE Barco
     SET realiza_ruta = (SELECT REF(oc) FROM Ruta oc WHERE oc.id = 3)
     WHERE id = 2;
-    */
 
 /* -------------------------------------------- PRUEBAS DELETE -------------------------------------------- */
 /*
